@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المستخدمين والصلاحيات</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts - Cairo -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --primary-start: #6366f1;
+            --sidebar-bg: #0b0e14;
+            --sidebar-hover: rgba(255, 255, 255, 0.05);
+            --card-bg: #131a26;
+            --input-bg: #1b2433;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-glow: #222f45;
+            --shadow-glow: 0 8px 40px rgba(99, 102, 241, 0.15);
+            --radius: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: #0b0e14;
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .app-container { position: relative; z-index: 1; display: flex; min-height: 100vh; }
+
+        .sidebar {
+            width: 260px; min-height: 100vh; background: var(--sidebar-bg);
+            border-left: 1px solid var(--border-glow); padding: 24px 16px;
+            display: flex; flex-direction: column; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+
+        .sidebar .sidebar-header {
+            text-align: center; padding-bottom: 20px; border-bottom: 1px solid var(--border-glow); margin-bottom: 20px;
+        }
+
+        .sidebar .sidebar-header .logo-icon {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 56px; height: 56px; border-radius: 50%; background: var(--primary-gradient);
+            color: white; font-size: 24px; margin-bottom: 10px; box-shadow: 0 4px 25px rgba(99, 102, 241, 0.3);
+        }
+
+        .sidebar .sidebar-header h4 { font-size: 18px; font-weight: 900; color: var(--text-main); margin: 0; }
+        .sidebar .sidebar-header h4 span { background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .sidebar .sidebar-header p { font-size: 11px; color: var(--text-muted); margin: 4px 0 0 0; }
+
+        .sidebar .nav { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+        .sidebar .nav .nav-item { list-style: none; }
+        .sidebar .nav .nav-link {
+            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+            border-radius: 10px; color: var(--text-muted); text-decoration: none;
+            font-weight: 700; font-size: 13px; transition: var(--transition); border: 1px solid transparent;
+        }
+        .sidebar .nav .nav-link i { width: 20px; text-align: center; font-size: 15px; }
+        .sidebar .nav .nav-link:hover { background: var(--sidebar-hover); color: var(--text-main); border-color: var(--border-glow); transform: translateX(-4px); }
+        .sidebar .nav .nav-link.active { background: var(--primary-gradient); color: white; border-color: transparent; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); transform: translateX(-4px); }
+        .sidebar .nav .nav-link.logout { color: #f43f5e; border-color: rgba(244, 63, 94, 0.2); margin-top: auto; }
+
+        .main-content { flex: 1; padding: 24px 32px; min-height: 100vh; overflow-x: hidden; }
+
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid var(--border-glow); margin-bottom: 24px;
+        }
+        .page-header h1 { font-size: 20px; font-weight: 900; margin: 0; display: flex; align-items: center; gap: 10px; }
+        .page-header h1 i { background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .page-header .user-badge {
+            display: flex; align-items: center; gap: 10px; background: var(--sidebar-bg);
+            padding: 8px 16px; border-radius: 12px; border: 1px solid var(--border-glow);
+        }
+        .page-header .user-badge i { color: var(--primary-start); font-size: 18px; }
+        .page-header .user-badge span { font-weight: 700; font-size: 13px; color: var(--text-main); }
+        .page-header .user-badge .role-badge { font-size: 10px; font-weight: 700; padding: 2px 10px; border-radius: 20px; background: var(--primary-gradient); color: white; }
+
+        .form-card {
+            background: var(--card-bg); border: 1px solid var(--border-glow);
+            border-radius: var(--radius); padding: 28px 32px; box-shadow: var(--shadow-glow); margin-bottom: 30px;
+        }
+        .form-card .card-title { font-size: 16px; font-weight: 900; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .form-card .card-title i { background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 5px; }
+        .form-group label i { margin-left: 6px; color: var(--primary-start); }
+        .form-group label .required { color: #f43f5e; margin-right: 2px; }
+
+        .form-control, .form-select {
+            background: var(--input-bg); border: 2px solid var(--border-glow); border-radius: 10px;
+            padding: 11px 14px; color: var(--text-main); font-family: 'Cairo', sans-serif; font-size: 13px; transition: var(--transition); width: 100%;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-start); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15); background: var(--input-bg); color: var(--text-main);
+        }
+
+        .btn-submit {
+            padding: 12px 32px; border: none; border-radius: 10px; font-family: 'Cairo', sans-serif;
+            font-size: 14px; font-weight: 700; color: white; background: var(--primary-gradient);
+            cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; gap: 8px; min-width: 160px; justify-content: center;
+        }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4); }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Table Styles */
+        .table-responsive { width: 100%; overflow-x: auto; }
+        .custom-table { width: 100%; border-collapse: separate; border-spacing: 0 8px; margin-top: 10px; }
+        .custom-table th { background: var(--input-bg); color: var(--text-muted); font-size: 12px; font-weight: 700; padding: 12px 16px; text-align: right; border: none; }
+        .custom-table td { background: var(--input-bg); color: var(--text-main); font-size: 13px; font-weight: 600; padding: 14px 16px; border: none; vertical-align: middle; }
+        .badge-role { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
+        .badge-status { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .badge-status.active { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-status.inactive { background: rgba(244, 63, 94, 0.15); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3); }
+
+        .action-btns { display: flex; gap: 8px; }
+        .btn-action { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border-glow); background: var(--card-bg); color: var(--text-main); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); }
+        .btn-action:hover { background: var(--primary-start); color: white; border-color: var(--primary-start); }
+        .btn-action.delete:hover { background: #f43f5e; border-color: #f43f5e; }
+
+        .alert-custom {
+            border-radius: 10px; padding: 14px 18px; font-size: 13px; font-weight: 600;
+            display: none; align-items: center; gap: 10px; margin-bottom: 20px; border: 1px solid transparent;
+        }
+        .alert-custom.show { display: flex; }
+        .alert-custom.success { background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.3); color: #10b981; }
+        .alert-custom.error { background: rgba(244, 63, 94, 0.12); border-color: rgba(244, 63, 94, 0.3); color: #f43f5e; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-icon"><i class="fas fa-bolt"></i></div>
+            <h4><span>نظام فواتير</span> المحاسبي</h4>
+            <p>لوحة التحكم</p>
+        </div>
+        <ul class="nav" id="sidebarNav">
+            <li class="nav-item" id="companySettingsMenu"><a href="financial_setup.html" class="nav-link"><i class="fas fa-building"></i> إعدادات الشركات</a></li>
+            <li class="nav-item"><a href="users_management.html" class="nav-link active"><i class="fas fa-users-cog"></i> إدارة المستخدمين</a></li>
+            <li class="nav-item"><a href="#" class="nav-link logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h1><i class="fas fa-users-cog"></i> إدارة المستخدمين والصلاحيات</h1>
+            <div class="user-badge">
+                <i class="fas fa-user-circle"></i>
+                <span id="currentAdmin">مرحباً، مدير النظام</span>
+                <span class="role-badge" id="userRoleBadge">ADMIN</span>
+            </div>
+        </div>
+
+        <div class="alert-custom" id="alertBox">
+            <i class="fas" id="alertIcon"></i>
+            <span id="alertMessage"></span>
+        </div>
+
+        <!-- فورم إضافة مستخدم جديد -->
+        <div class="form-card">
+            <div class="card-title"><i class="fas fa-user-plus"></i> إضافة مستخدم جديد</div>
+
+            <form id="addUserForm" autocomplete="off">
+                <div class="row">
+                    <div class="col-md-6 form-group">
+                        <label for="username"><i class="fas fa-user"></i> اسم المستخدم <span class="required">*</span></label>
+                        <input type="text" class="form-control" id="username" required placeholder="مثال: accountant1">
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label for="fullName"><i class="fas fa-id-card"></i> الاسم الكامل <span class="required">*</span></label>
+                        <input type="text" class="form-control" id="fullName" required placeholder="مثال: محمد أحمد">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 form-group">
+                        <label for="password"><i class="fas fa-lock"></i> كلمة المرور <span class="required">*</span></label>
+                        <input type="password" class="form-control" id="password" required placeholder="6 أحرف على الأقل">
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label for="role"><i class="fas fa-shield-alt"></i> صلاحية المستخدم <span class="required">*</span></label>
+                        <select class="form-select" id="role" required>
+                            <!-- تعبئة ديناميكية حسب الصلاحية -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- حقل أو قائمة كود الشركة -->
+                <div class="row" id="companyInputContainer">
+                    <div class="col-md-12 form-group" id="companyFieldWrapper">
+                        <!-- تعبئة ديناميكية -->
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <i class="fas fa-save"></i> حفظ وإنشاء المستخدم
+                </button>
+            </form>
+        </div>
+
+        <!-- جدول المستخدمين -->
+        <div class="form-card">
+            <div class="card-title d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-list"></i> قائمة المستخدمين المسجلين</span>
+                <button class="btn btn-sm btn-outline-light" onclick="loadUsers()"><i class="fas fa-sync-alt"></i> تحديث</button>
+            </div>
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                    <tr>
+                        <th>الكود التعريفي</th>
+                        <th>اسم المستخدم</th>
+                        <th>الاسم الكامل</th>
+                        <th>الصلاحية</th>
+                        <th>كود الشركة</th>
+                        <th>الحالة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                    <tr><td colspan="7" class="text-center text-muted py-4">جاري التحميل...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    const token = localStorage.getItem('jwtToken');
+    const userRole = (localStorage.getItem('userRole') || '').trim().toUpperCase();
+    const userCompanyCode = (localStorage.getItem('companyBusinessCode') || '').trim();
+
+    if (!token) { window.location.href = 'login.html'; }
+
+    const isSystemAdmin = userRole.includes('SYSTEM');
+
+    if (!isSystemAdmin) {
+        const companyMenu = document.getElementById('companySettingsMenu');
+        if (companyMenu) {
+            companyMenu.style.display = 'none';
+        }
+    }
+
+    document.getElementById('currentAdmin').textContent = 'مرحباً، ' + (localStorage.getItem('fullName') || 'مدير النظام');
+    document.getElementById('userRoleBadge').textContent = userRole || 'ADMIN';
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        setupRoleOptions();
+        await setupCompanyInput();
+        loadUsers();
+    });
+
+    // 1. تحديد خيارات قائمة الصلاحيات
+    function setupRoleOptions() {
+        const roleSelect = document.getElementById('role');
+        roleSelect.innerHTML = '';
+
+        if (isSystemAdmin) {
+            roleSelect.innerHTML = `
+                <option value="ADMIN_SYSTEM">👑 مدير عام النظام (ADMIN_SYSTEM)</option>
+                <option value="ROLE_ADMIN">🏢 مدير شركة (ROLE_ADMIN)</option>
+                <option value="ROLE_ACCOUNTANT">📊 محاسب (ROLE_ACCOUNTANT)</option>
+                <option value="ROLE_CASHIER">💰 موظف مبيعات/مخزون (ROLE_CASHIER)</option>
+            `;
+        } else {
+            roleSelect.innerHTML = `
+                <option value="ROLE_ADMIN">🏢 مدير شركة (ROLE_ADMIN)</option>
+                <option value="ROLE_ACCOUNTANT">📊 محاسب (ROLE_ACCOUNTANT)</option>
+                <option value="ROLE_CASHIER">💰 موظف مبيعات/مخزون (ROLE_CASHIER)</option>
+            `;
+        }
+    }
+
+    // 2. إعداد حقل الشركة (قائمة لمدير النظام أو حقل نصي لمدير الشركة)
+    async function setupCompanyInput() {
+        const wrapper = document.getElementById('companyFieldWrapper');
+
+        if (!isSystemAdmin) {
+            wrapper.innerHTML = `
+                <label for="companyBusinessCodeInput"><i class="fas fa-building"></i> كود الشركة التابع لها المستخدم <span class="required">*</span></label>
+                <input type="text" class="form-control" id="companyBusinessCodeInput" value="${userCompanyCode}" required placeholder="أدخل كود شركتك هنا">
+                <div class="form-text text-muted" style="font-size: 11px; margin-top: 4px;">
+                    💡 أدخل كود شركتك لربط المستخدم بها.
+                </div>
+            `;
+        } else {
+            wrapper.innerHTML = `
+                <label for="companyBusinessCodeSelect"><i class="fas fa-building"></i> اختر الشركة التابع لها المستخدم <span class="required">*</span></label>
+                <select class="form-select" id="companyBusinessCodeSelect" required>
+                    <option value="">جاري تحميل الشركات...</option>
+                </select>
+                <div class="form-text text-muted" style="font-size: 11px; margin-top: 4px;">
+                    💡 اختر الشركة من القائمة المنسدلة.
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/api/v1/companies', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (!response.ok) throw new Error('فشل جلب الشركات');
+                const companies = await response.json();
+                const select = document.getElementById('companyBusinessCodeSelect');
+
+                select.innerHTML = '<option value="">اختر الشركة من القائمة...</option>';
+                if (companies.length === 0) {
+                    select.innerHTML = '<option value="">لا توجد شركات مسجلة في النظام</option>';
+                    return;
+                }
+
+                companies.forEach(comp => {
+                    const compName = comp.nameAr || comp.name || comp.businessCode;
+                    select.innerHTML += `<option value="${comp.businessCode}">${compName} (${comp.businessCode})</option>`;
+                });
+            } catch (e) {
+                document.getElementById('companyBusinessCodeSelect').innerHTML = '<option value="">خطأ في تحميل الشركات</option>';
+            }
+        }
+    }
+
+    function showAlert(message, type = 'success') {
+        const alertBox = document.getElementById('alertBox');
+        alertBox.className = 'alert-custom show ' + type;
+        document.getElementById('alertIcon').className = 'fas ' + (type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle');
+        document.getElementById('alertMessage').textContent = message;
+        setTimeout(() => { alertBox.className = 'alert-custom'; }, 5000);
+    }
+
+    async function loadUsers() {
+        try {
+            const response = await fetch('/api/users', { headers: { 'Authorization': 'Bearer ' + token } });
+            const users = await response.json();
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">لا توجد بيانات</td></tr>';
+                return;
+            }
+
+            users.forEach(user => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><code>${user.businessCode}</code></td>
+                        <td>${user.username}</td>
+                        <td>${user.fullName}</td>
+                        <td><span class="badge-role">${user.role}</span></td>
+                        <td>${user.companyBusinessCode || '-'}</td>
+                        <td><span class="badge-status ${user.isActive ? 'active' : 'inactive'}">${user.isActive ? 'موقف' : 'نشط'}</span></td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn-action" title="تغيير الحالة" onclick="toggleUserStatus('${user.businessCode}')"><i class="fas fa-power-off"></i></button>
+                                <button class="btn-action delete" title="حذف" onclick="deleteUser('${user.businessCode}')"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        } catch (error) {
+            document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="7" class="text-danger text-center py-4">خطأ في التحميل</td></tr>';
+        }
+    }
+
+    document.getElementById('addUserForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submitBtn');
+
+        let targetCompanyCode = '';
+
+        if (isSystemAdmin) {
+            const selectEl = document.getElementById('companyBusinessCodeSelect');
+            targetCompanyCode = selectEl ? selectEl.value : '';
+        } else {
+            const inputEl = document.getElementById('companyBusinessCodeInput');
+            targetCompanyCode = inputEl ? inputEl.value.trim() : '';
+        }
+
+        if (!targetCompanyCode) {
+            showAlert('يرجى تحديد أو إدخال كود الشركة للمستخدم', 'error');
+            return;
+        }
+
+        const userData = {
+            username: document.getElementById('username').value.trim(),
+            password: document.getElementById('password').value.trim(),
+            fullName: document.getElementById('fullName').value.trim(),
+            role: document.getElementById('role').value,
+            companyBusinessCode: targetCompanyCode
+        };
+
+        submitBtn.disabled = true;
+
+        try {
+            const response = await fetch('/api/users/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify(userData)
+            });
+
+            const resultText = await response.text();
+            if (!response.ok) throw new Error(resultText || 'فشل الإنشاء');
+
+            showAlert('✅ تم إنشاء المستخدم وربطه بالشركة بنجاح!', 'success');
+            document.getElementById('addUserForm').reset();
+            setupRoleOptions();
+            setupCompanyInput();
+            loadUsers();
+        } catch (error) {
+            showAlert('❌ ' + error.message, 'error');
+        } finally {
+            submitBtn.disabled = false;
+        }
+    });
+
+    async function toggleUserStatus(businessCode) {
+        await fetch(`/api/users/${businessCode}/toggle-status`, { method: 'PATCH', headers: { 'Authorization': 'Bearer ' + token } });
+        loadUsers();
+    }
+
+    async function deleteUser(businessCode) {
+        if (!confirm('هل أنت متأكد من الحذف؟')) return;
+        await fetch(`/api/users/${businessCode}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+        loadUsers();
+    }
+
+    function logout() {
+        localStorage.clear();
+        window.location.href = 'login.html';
+    }
+</script>
+
+</body>
+</html>

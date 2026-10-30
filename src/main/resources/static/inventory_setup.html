@@ -1,0 +1,4103 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المخزون - الأصناف والموردين والعملاء</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        /* ===== CSS Variables ===== */
+        :root {
+            --bg-deep: #0b0e14;
+            --bg-card: #131a26;
+            --bg-input: #1b2433;
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --neon-cyan: #06b6d4;
+            --neon-green: #10b981;
+            --neon-red: #f43f5e;
+            --neon-purple: #a855f7;
+            --neon-yellow: #f59e0b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-glow: #222f45;
+            --shadow-glow: 0 0 15px rgba(99, 102, 241, 0.25);
+            --sidebar-width: 250px;
+            --radius: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --glow-cyan: 0 0 20px rgba(6, 182, 212, 0.15);
+            --glow-green: 0 0 20px rgba(16, 185, 129, 0.15);
+            --glow-purple: 0 0 20px rgba(168, 85, 247, 0.15);
+        }
+
+        [data-theme="light"] {
+            --bg-deep: #f0f4f8;
+            --bg-card: #ffffff;
+            --bg-input: #f1f5f9;
+            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            --neon-cyan: #0891b2;
+            --neon-green: #059669;
+            --neon-red: #dc2626;
+            --neon-purple: #7c3aed;
+            --text-main: #1e293b;
+            --text-muted: #475569;
+            --border-glow: #cbd5e1;
+            --shadow-glow: 0 0 20px rgba(79, 70, 229, 0.15);
+            --glow-cyan: 0 0 20px rgba(8, 145, 178, 0.1);
+            --glow-green: 0 0 20px rgba(5, 150, 105, 0.1);
+            --glow-purple: 0 0 20px rgba(124, 58, 237, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease; }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            margin: 0;
+            padding: 12px;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        [data-theme="dark"] .particles {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; overflow: hidden; pointer-events: none;
+        }
+        [data-theme="dark"] .particle {
+            position: absolute; background: rgba(255,255,255,0.04); border-radius: 50%;
+            animation: floatParticle linear infinite;
+        }
+        @keyframes floatParticle {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.5; }
+            90% { opacity: 0.5; }
+            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+        }
+
+        .app-container {
+            display: flex;
+            gap: 12px;
+            max-width: 100%;
+            position: relative;
+            z-index: 1;
+            height: calc(100vh - 24px);
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            min-width: var(--sidebar-width);
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius);
+            padding: 16px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+            animation: slideDown 0.6s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .sidebar-logo {
+            text-align: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-glow);
+            position: relative;
+        }
+
+        .sidebar-logo::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 25%;
+            width: 50%;
+            height: 2px;
+            background: var(--primary-gradient);
+            border-radius: 10px;
+        }
+
+        .sidebar-logo h2 {
+            font-size: 18px;
+            font-weight: 900;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-logo p {
+            font-size: 10px;
+            color: var(--text-muted);
+            -webkit-text-fill-color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .sidebar-logo .developer-name {
+            font-size: 9px;
+            color: var(--neon-cyan);
+            opacity: 0.7;
+            -webkit-text-fill-color: var(--neon-cyan);
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .sidebar-nav .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition);
+            border: 1px solid transparent;
+            font-weight: 700;
+            font-size: 12px;
+            background: transparent;
+            width: 100%;
+            text-align: right;
+            font-family: 'Cairo', sans-serif;
+            position: relative;
+        }
+
+        .sidebar-nav .nav-item:hover {
+            background: var(--bg-input);
+            color: var(--text-main);
+            border-color: var(--border-glow);
+            transform: translateX(-4px);
+        }
+
+        .sidebar-nav .nav-item.active {
+            background: var(--primary-gradient);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            transform: translateX(-4px);
+        }
+
+        .sidebar-nav .nav-item i {
+            width: 20px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .sidebar-nav .nav-item .badge-count {
+            margin-right: auto;
+            background: rgba(255,255,255,0.1);
+            padding: 1px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+        }
+
+        .sidebar-nav .nav-item.active .badge-count {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .sidebar-footer {
+            border-top: 1px solid var(--border-glow);
+            padding-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .sidebar-footer .theme-toggle-btn {
+            background: var(--bg-input);
+            border: 1px solid var(--border-glow);
+            border-radius: 40px;
+            padding: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: var(--transition);
+        }
+
+        .sidebar-footer .theme-toggle-btn:hover {
+            border-color: var(--neon-cyan);
+            box-shadow: var(--glow-cyan);
+        }
+
+        .sidebar-footer .theme-option {
+            padding: 5px 14px;
+            border-radius: 35px;
+            font-size: 11px;
+            font-weight: 700;
+            transition: var(--transition);
+            cursor: pointer;
+            background: transparent;
+            color: var(--text-muted);
+        }
+
+        .sidebar-footer .theme-option.active {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .sidebar-footer .logout-btn {
+            background: transparent;
+            border: 1px solid var(--neon-red);
+            color: var(--neon-red);
+            padding: 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .sidebar-footer .logout-btn:hover {
+            background: rgba(244, 63, 94, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(244, 63, 94, 0.2);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        .company-bar {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius);
+            padding: 12px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            animation: fadeInUp 0.8s ease;
+            box-shadow: var(--shadow-glow);
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .company-bar .company-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .company-bar .company-info h1 {
+            font-size: 16px;
+            font-weight: 900;
+            color: var(--text-main);
+        }
+
+        .company-bar .company-info h1 i {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .company-bar .company-info .badge-code {
+            background: var(--bg-input);
+            border: 1px solid var(--border-glow);
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--neon-cyan);
+            transition: var(--transition);
+        }
+
+        .company-bar .company-info .badge-code.id-badge {
+            border-color: var(--neon-purple);
+            color: var(--neon-purple);
+        }
+
+        .btn-go-to-transactions {
+            background: var(--neon-green);
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Cairo', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-go-to-transactions:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 4px 25px rgba(16, 185, 129, 0.5);
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn-go-to-accounting {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Cairo', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-go-to-accounting:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 4px 25px rgba(99, 102, 241, 0.5);
+            color: white;
+            text-decoration: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        @media (max-width: 992px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 576px) {
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius);
+            padding: 12px 16px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary-gradient);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--neon-purple);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .stat-card .label {
+            font-size: 9px;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .value {
+            font-size: 20px;
+            font-weight: 900;
+            font-family: monospace, 'Cairo';
+            margin: 3px 0;
+        }
+
+        .stat-card .sub {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .stat-card .stat-icon {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 20px;
+            opacity: 0.1;
+        }
+
+        .text-cyan { color: var(--neon-cyan); }
+        .text-green { color: var(--neon-green); }
+        .text-red { color: var(--neon-red); }
+        .text-purple { color: var(--neon-purple); }
+        .text-yellow { color: var(--neon-yellow); }
+
+        .content-area {
+            flex: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius);
+            padding: 16px;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .content-area::-webkit-scrollbar {
+            width: 5px;
+        }
+        .content-area::-webkit-scrollbar-track {
+            background: var(--bg-deep);
+            border-radius: 10px;
+        }
+        .content-area::-webkit-scrollbar-thumb {
+            background: var(--neon-cyan);
+            border-radius: 10px;
+        }
+
+        .inner-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 14px;
+            background: var(--bg-deep);
+            padding: 4px;
+            border-radius: 10px;
+            border: 1px solid var(--border-glow);
+            flex-wrap: wrap;
+        }
+
+        .inner-tabs .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 700;
+            font-size: 11px;
+            transition: var(--transition);
+            min-width: 70px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .inner-tabs .tab-btn:hover {
+            color: var(--text-main);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .inner-tabs .tab-btn.active {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-glow);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid var(--border-glow);
+        }
+
+        .table-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-glow);
+            background: var(--bg-deep);
+            border-radius: 10px 10px 0 0;
+        }
+
+        .table-toolbar .search-box {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .table-toolbar .search-box input {
+            background: var(--bg-input);
+            border: 1px solid var(--border-glow);
+            border-radius: 6px;
+            padding: 5px 10px;
+            color: var(--text-main);
+            font-family: 'Cairo', sans-serif;
+            font-size: 11px;
+            outline: none;
+            width: 180px;
+            transition: var(--transition);
+        }
+
+        .table-toolbar .search-box input:focus {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+        }
+
+        .table-toolbar .search-box input::placeholder {
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+
+        .btn-export {
+            background: var(--neon-green);
+            color: white;
+            border: none;
+            padding: 5px 14px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Cairo', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-export-word {
+            background: var(--neon-cyan);
+            color: white;
+            border: none;
+            padding: 5px 14px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Cairo', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-export-word:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+        }
+
+        .export-actions {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+            font-size: 12px;
+        }
+
+        .data-table th {
+            padding: 8px 10px;
+            color: var(--text-muted);
+            font-size: 10px;
+            border-bottom: 2px solid var(--border-glow);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+            background: var(--bg-deep);
+        }
+
+        .data-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border-glow);
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tr:hover td {
+            background: rgba(99, 102, 241, 0.04);
+        }
+
+        .code-highlight {
+            background: var(--bg-input);
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 11px;
+            border: 1px solid var(--border-glow);
+            color: var(--neon-cyan);
+        }
+
+        .type-badge {
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 9px;
+            font-weight: 700;
+            display: inline-block;
+        }
+        .badge-active { background: rgba(16, 185, 129, 0.15); color: var(--neon-green); }
+        .badge-inactive { background: rgba(244, 63, 94, 0.15); color: var(--neon-red); }
+        .badge-draft { background: rgba(251, 191, 36, 0.15); color: var(--neon-yellow); }
+        .badge-posted { background: rgba(16, 185, 129, 0.15); color: var(--neon-green); }
+
+        .stock-high { background: rgba(16, 185, 129, 0.15); color: var(--neon-green); }
+        .stock-medium { background: rgba(251, 191, 36, 0.15); color: var(--neon-yellow); }
+        .stock-low { background: rgba(244, 63, 94, 0.15); color: var(--neon-red); }
+
+        .btn-sm {
+            padding: 4px 12px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 700;
+            font-size: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Cairo', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-sm:hover { transform: translateY(-2px); opacity: 0.9; }
+
+        .btn-primary-sm { background: var(--neon-cyan); color: white; }
+        .btn-success-sm { background: var(--neon-green); color: white; }
+        .btn-purple-sm { background: var(--neon-purple); color: white; }
+        .btn-danger-sm { background: var(--neon-red); color: white; }
+        .btn-warning-sm { background: var(--neon-yellow); color: #1e293b; }
+
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+
+        .modal-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius);
+            padding: 20px;
+            max-width: 850px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: fadeInUp 0.4s ease;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .modal-box .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-glow);
+        }
+
+        .modal-box .modal-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 900;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .modal-box .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .modal-box .modal-close:hover {
+            color: var(--neon-red);
+            transform: rotate(90deg);
+        }
+
+        .modal-box .modal-footer {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            margin-top: 14px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-glow);
+            flex-wrap: wrap;
+        }
+
+        .alert-toast {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            display: none;
+            z-index: 2000;
+            animation: slideDown 0.4s ease;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid var(--neon-green);
+            color: var(--neon-green);
+        }
+        .alert-error {
+            background: rgba(244, 63, 94, 0.15);
+            border: 1px solid var(--neon-red);
+            color: var(--neon-red);
+        }
+        .alert-info {
+            background: rgba(6, 182, 212, 0.15);
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+        }
+
+        .input-group {
+            margin-bottom: 10px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .input-group label .required {
+            color: var(--neon-red);
+            margin-right: 2px;
+        }
+
+        .modern-input, .modern-select {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border-glow);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: var(--text-main);
+            font-family: 'Cairo', sans-serif;
+            font-size: 12px;
+            outline: none;
+            transition: var(--transition);
+        }
+        .modern-input:focus, .modern-select:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        .modern-input::placeholder {
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+        .modern-input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .auto-code-badge {
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 10px;
+            color: var(--neon-cyan);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        @media (max-width: 576px) {
+            .form-row { grid-template-columns: 1fr; }
+        }
+
+        .text-muted { color: var(--text-muted); }
+        .text-center { text-align: center; }
+        .mb-1 { margin-bottom: 4px; }
+        .mt-1 { margin-top: 4px; }
+        .gap-1 { gap: 4px; }
+
+        .btn-outline-cyan-sm {
+            padding: 4px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--neon-cyan);
+            background: transparent;
+            color: var(--neon-cyan);
+            font-weight: 700;
+            font-size: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Cairo', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-outline-cyan-sm:hover {
+            background: var(--neon-cyan);
+            color: var(--bg-deep);
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 992px) {
+            .app-container { flex-direction: column; height: auto; }
+            .sidebar {
+                width: 100%;
+                min-width: unset;
+                flex-direction: row;
+                flex-wrap: wrap;
+                padding: 10px 14px;
+                gap: 8px;
+            }
+            .sidebar-logo { border-bottom: none; padding-bottom: 0; }
+            .sidebar-logo::after { display: none; }
+            .sidebar-nav { flex-direction: row; flex-wrap: wrap; flex: none; }
+            .sidebar-nav .nav-item { padding: 6px 10px; font-size: 11px; width: auto; }
+            .sidebar-footer { border-top: none; padding-top: 0; flex-direction: row; flex-wrap: wrap; }
+            .sidebar-footer .logout-btn { width: auto; padding: 5px 12px; }
+            .main-content { min-height: 400px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .modal-box { max-width: 95%; }
+            .table-toolbar .search-box input { width: 120px; }
+            .export-actions { flex-direction: row; }
+        }
+
+        @media (max-width: 576px) {
+            body { padding: 6px; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .sidebar-nav .nav-item { font-size: 10px; padding: 5px 8px; }
+            .inner-tabs .tab-btn {
+                font-size: 10px;
+                padding: 6px 8px;
+                min-width: 50px;
+            }
+            .table-toolbar { flex-direction: column; align-items: stretch; }
+            .table-toolbar .search-box input { width: 100%; }
+            .export-actions { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== جزيئات الخلفية ===== -->
+<div id="particles" class="particles"></div>
+
+<!-- ===== التنبيهات ===== -->
+<div id="statusToast" class="alert-toast"></div>
+
+<div class="app-container">
+
+    <!-- ===== الشريط الجانبي ===== -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <h2><i class="fas fa-hospital"></i> نظام فواتير المحاسبي</h2>
+            <p>إدارة المخزون و الاصناف والعملاء والموردين</p>
+            <p class="developer-name">م. اصيل فتاحي</p>
+        </div>
+
+        <nav class="sidebar-nav">
+            <button class="nav-item active" onclick="navigateTo('items')">
+                <i class="fas fa-cubes"></i> المخزون
+                <span class="badge-count" id="sideItemCount">0</span>
+            </button>
+            <button class="nav-item" onclick="navigateTo('addItem')">
+                <i class="fas fa-plus-circle"></i> إضافة صنف
+            </button>
+            <button class="nav-item" onclick="navigateTo('suppliers')">
+                <i class="fas fa-truck"></i> الموردين
+                <span class="badge-count" id="sideSupplierCount">0</span>
+            </button>
+            <button class="nav-item" onclick="navigateTo('addSupplier')">
+                <i class="fas fa-user-plus"></i> إضافة مورد
+            </button>
+            <button class="nav-item" onclick="navigateTo('customers')">
+                <i class="fas fa-users"></i> العملاء
+                <span class="badge-count" id="sideCustomerCount">0</span>
+            </button>
+            <button class="nav-item" onclick="navigateTo('addCustomer')">
+                <i class="fas fa-user-plus"></i> إضافة عميل
+            </button>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="theme-toggle-btn" id="themeToggle">
+                <span class="theme-option active" data-theme="dark"><i class="fas fa-moon"></i> داكن</span>
+                <span class="theme-option" data-theme="light"><i class="fas fa-sun"></i> فاتح</span>
+            </div>
+            <button class="logout-btn" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</button>
+        </div>
+    </aside>
+
+    <!-- ===== المحتوى الرئيسي ===== -->
+    <main class="main-content">
+
+        <!-- شريط الشركة مع أزرار الانتقال -->
+        <div class="company-bar">
+            <div class="company-info">
+                <!-- 🔥 العنوان الديناميكي يعرض اسم الشركة -->
+                <h1 id="lblCompanyTitle"><i class="fas fa-cubes"></i> جاري التحميل...</h1>
+                <span class="badge-code" id="lblCompanyCode">---</span>
+                <span class="badge-code id-badge" id="lblCompanyName">---</span>
+            </div>
+            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                <a id="btnGoToAccounting" href="#" class="btn-go-to-accounting">
+                    <i class="fas fa-arrow-right"></i> العودة الي القيود والتقارير
+                </a>
+                <a id="btnGoToTransactions" href="#" class="btn-go-to-transactions" style="display:none;">
+                    <i class="fas fa-arrow-left"></i> فواتير الشراء والمبيعات
+                </a>
+            </div>
+        </div>
+
+        <!-- البطاقات الإحصائية -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-cubes stat-icon"></i>
+                <div class="label">إجمالي الأصناف</div>
+                <div class="value text-cyan" id="lblTotalItems">0</div>
+                <div class="sub">في المخزون</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-boxes stat-icon"></i>
+                <div class="label">إجمالي الكمية</div>
+                <div class="value text-green" id="lblTotalStock">0</div>
+                <div class="sub">وحدة</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-coins stat-icon"></i>
+                <div class="label">قيمة المخزون</div>
+                <div class="value text-purple" id="lblTotalValue">0.00</div>
+                <div class="sub">بسعر الشراء</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-tags stat-icon"></i>
+                <div class="label">قيمة المبيعات</div>
+                <div class="value text-yellow" id="lblTotalSalesValue">0.00</div>
+                <div class="sub">بسعر البيع</div>
+            </div>
+        </div>
+
+        <!-- منطقة المحتوى -->
+        <div class="content-area">
+
+            <!-- التبويبات الداخلية -->
+            <div class="inner-tabs">
+                <button class="tab-btn active" onclick="switchTab(event, 'panelItems')"><i class="fas fa-cubes"></i> المخزون</button>
+                <button class="tab-btn" onclick="switchTab(event, 'panelAddItem')"><i class="fas fa-plus-circle"></i> إضافة صنف</button>
+                <button class="tab-btn" onclick="switchTab(event, 'panelSuppliers')"><i class="fas fa-truck"></i> الموردين</button>
+                <button class="tab-btn" onclick="switchTab(event, 'panelAddSupplier')"><i class="fas fa-user-plus"></i> إضافة مورد</button>
+                <button class="tab-btn" onclick="switchTab(event, 'panelCustomers')"><i class="fas fa-users"></i> العملاء</button>
+                <button class="tab-btn" onclick="switchTab(event, 'panelAddCustomer')"><i class="fas fa-user-plus"></i> إضافة عميل</button>
+            </div>
+
+            <!-- ===== تبويب المخزون ===== -->
+            <div id="panelItems" class="tab-panel active">
+                <div class="flex-between">
+                    <h4 style="margin: 0; font-size: 13px; font-weight: 700;"><i class="fas fa-cubes"></i> أصناف المخزون الحالية</h4>
+                </div>
+                <div class="table-wrap">
+                    <div class="table-toolbar">
+                        <div class="search-box">
+                            <i class="fas fa-search" style="color:var(--text-muted);font-size:12px;"></i>
+                            <input type="text" id="itemsSearch" placeholder="🔍 بحث باسم أو كود الصنف..." onkeyup="filterTable('itemsSearch', 'itemsTableBody')">
+                        </div>
+                        <div class="export-actions">
+                            <button class="btn-export" onclick="exportTableToExcel('itemsTable', 'الأصناف')">
+                                <i class="fas fa-file-excel"></i> Excel
+                            </button>
+                            <button class="btn-export-word" onclick="exportTableToWord('itemsTable', 'الأصناف')">
+                                <i class="fas fa-file-word"></i> Word
+                            </button>
+                        </div>
+                    </div>
+                    <table class="data-table" id="itemsTable">
+                        <thead>
+                        <tr>
+                            <th>كود الصنف</th>
+                            <th>الاسم (عربي)</th>
+                            <th>الوحدة</th>
+                            <th>سعر الشراء</th>
+                            <th>سعر البيع</th>
+                            <th>الكمية الحالية</th>
+                            <th>الحالة</th>
+                        </tr>
+                        </thead>
+                        <tbody id="itemsTableBody">
+                        <tr><td colspan="7" class="text-center text-muted" style="padding: 20px;"><i class="fas fa-spinner fa-pulse"></i> جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ===== تبويب إضافة صنف ===== -->
+            <div id="panelAddItem" class="tab-panel">
+                <div class="flex-between">
+                    <h4 style="margin: 0; font-size: 13px; font-weight: 700;"><i class="fas fa-plus-circle"></i> إضافة صنف جديد</h4>
+                </div>
+                <form id="addItemForm" onsubmit="submitNewItem(event)">
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label><i class="fas fa-tag"></i> كود الصنف <span class="required">*</span></label>
+                            <input type="text" id="newItemCode" class="modern-input" placeholder="مثال: ITM-2007" required>
+                        </div>
+                        <div class="input-group">
+                            <label><i class="fas fa-ruler"></i> الوحدة <span class="required">*</span></label>
+                            <input type="text" id="newItemUnit" class="modern-input" placeholder="مثال: جمله / حبة" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label><i class="fas fa-font"></i> الاسم (عربي) <span class="required">*</span></label>
+                            <input type="text" id="newItemNameAr" class="modern-input" placeholder="اسم الصنف بالعربي" required>
+                        </div>
+                        <div class="input-group">
+                            <label><i class="fas fa-font"></i> الاسم (إنجليزي)</label>
+                            <input type="text" id="newItemNameEn" class="modern-input" placeholder="Item Name English">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label><i class="fas fa-money-bill"></i> سعر الشراء <span class="required">*</span></label>
+                            <input type="number" step="any" id="newItemPurchasePrice" class="modern-input" value="0.0" required>
+                        </div>
+                        <div class="input-group">
+                            <label><i class="fas fa-tag"></i> سعر البيع <span class="required">*</span></label>
+                            <input type="number" step="any" id="newItemSalePrice" class="modern-input" value="0.0" required>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label><i class="fas fa-boxes"></i> الكمية الأولية <span class="required">*</span></label>
+                        <input type="number" step="any" id="newItemCurrentStock" class="modern-input" value="0.0" required>
+                    </div>
+                    <button type="submit" class="btn-success-sm" style="width:100%;padding:10px;font-size:13px;"><i class="fas fa-save"></i> حفظ الصنف الجديد</button>
+                </form>
+                <div id="addItemResult" class="mt-1"></div>
+            </div>
+
+            <!-- ===== تبويب عرض الموردين ===== -->
+            <div id="panelSuppliers" class="tab-panel">
+                <div class="flex-between">
+                    <h4 style="margin: 0; font-size: 13px; font-weight: 700;"><i class="fas fa-truck"></i> قائمة الموردين</h4>
+                </div>
+                <div class="table-wrap">
+                    <div class="table-toolbar">
+                        <div class="search-box">
+                            <i class="fas fa-search" style="color:var(--text-muted);font-size:12px;"></i>
+                            <input type="text" id="suppliersSearch" placeholder="🔍 بحث باسم أو كود المورد..." onkeyup="filterTable('suppliersSearch', 'suppliersTableBody')">
+                        </div>
+                        <div class="export-actions">
+                            <button class="btn-export" onclick="exportTableToExcel('suppliersTable', 'الموردين')">
+                                <i class="fas fa-file-excel"></i> Excel
+                            </button>
+                            <button class="btn-export-word" onclick="exportTableToWord('suppliersTable', 'الموردين')">
+                                <i class="fas fa-file-word"></i> Word
+                            </button>
+                        </div>
+                    </div>
+                    <table class="data-table" id="suppliersTable">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>كود المورد</th>
+                            <th>الاسم</th>
+                            <th>الهاتف</th>
+                            <th>العنوان</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                        </thead>
+                        <tbody id="suppliersTableBody">
+                        <tr><td colspan="6" class="text-center text-muted" style="padding: 20px;"><i class="fas fa-spinner fa-pulse"></i> جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ===== تبويب إضافة مورد ===== -->
+            <div id="panelAddSupplier" class="tab-panel">
+                <div class="flex-between">
+                    <h4 style="margin: 0; font-size: 13px; font-weight: 700;"><i class="fas fa-user-plus"></i> إضافة مورد جديد</h4>
+                    <span id="autoSupplierCodeBadge" class="auto-code-badge"><i class="fas fa-magic"></i> الكود سيتوليد تلقائياً</span>
+                </div>
+                <form id="addSupplierForm" onsubmit="submitNewSupplier(event)">
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label><i class="fas fa-tag"></i> كود المورد</label>
+                            <input type="text" id="newSupplierCode" class="modern-input" placeholder="سيتوليد تلقائياً" readonly disabled style="background:var(--bg-input);opacity:0.7;">
+                            <small style="color:var(--text-muted);font-size:9px;">سيتم توليد الكود تلقائياً عند الحفظ</small>
+                        </div>
+                        <div class="input-group">
+                            <label><i class="fas fa-building"></i> اسم المورد <span class="required">*</span></label>
+                            <input type="text" id="newSupplierName" class="modern-input" placeholder="اسم الشركة أو المورد" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label><i class="fas fa-phone"></i> رقم الهاتف</label>
+                            <input type="text" id="newSupplierPhone" class="modern-input" placeholder="77xxxxxxx">
+                        </div>
+                        <div class="input-group">
+                            <label><i class="fas fa-map-marker-alt"></i> العنوان</label>
+                            <input type="text" id="newSupplierAddress" class="modern-input" placeholder="المدينة - الشارع">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label><i class="fas fa-sticky-note"></i> ملاحظات</label>
+                        <input type="text" id="newSupplierNotes" class="modern-input" placeholder="ملاحظات حول المورد">
+                    </div>
+                    <button type="submit" class="btn-success-sm" style="width:100%;padding:10px;font-size:13px;"><i class="fas fa-save"></i> حفظ المورد الجديد</button>
+                </form>
+                <div id="addSupplierResult" class="mt-1"></div>
+            </div>
+
+            <!-- ===== تبويب عرض العملاء ===== -->
+            <div id="panelCustomers" class="tab-panel">
+                <div class="flex-between">
+                    <h4 style="margin: 0; font-size: 13px; font-weight: 700;"><i class="fas fa-users"></i> قائمة العملاء</h4>
+                </div>
+                <div class="table-wrap">
+                    <div class="table-toolbar">
+                        <div class="search-box">
+                            <i class="fas fa-search" style="color:var(--text-muted);font-size:12px;"></i>
+                            <input type="text" id="customersSearch" placeholder="🔍 بحث باسم أو كود العميل..." onkeyup="filterTable('customersSearch', 'customersTableBody')">
+                        </div>
+                        <div class="export-actions">
+                            <button class="btn-export" onclick="exportTableToExcel('customersTable', 'العملاء')">
+                                <i class="fas fa-file-excel"></i> Excel
+                            </button>
+                            <button class="btn-export-word" onclick="exportTableToWord('customersTable', 'العملاء')">
+                                <i class="fas fa-file-word"></i> Word
+                            </button>
+                        </div>
+                    </div>
+                    <table class="data-table" id="customersTable">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>كود العميل</th>
+                            <th>الاسم</th>
+                            <th>الهاتف</th>
+                            <th>العنوان</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                        </thead>
+                        <tbody id="customersTableBody">
+                        <tr><td colspan="6" class="text-center text-muted" style="padding: 20px;"><i class="fas fa-spinner fa-pulse"></i> جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ===== تبويب إضافة عميل ===== -->
+            <div id="panelAddCustomer" class="tab-panel">
+                <div class="flex-between">
+                    <h4 style="margin: 0; font-size: 13px; font-weight: 700;"><i class="fas fa-user-plus"></i> إضافة عميل جديد</h4>
+                    <span id="autoCustomerCodeBadge" class="auto-code-badge"><i class="fas fa-magic"></i> الكود سيتوليد تلقائياً</span>
+                </div>
+                <form id="addCustomerForm" onsubmit="submitNewCustomer(event)">
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label><i class="fas fa-tag"></i> كود العميل</label>
+                            <input type="text" id="newCustomerCode" class="modern-input" placeholder="سيتوليد تلقائياً" readonly disabled style="background:var(--bg-input);opacity:0.7;">
+                            <small style="color:var(--text-muted);font-size:9px;">سيتم توليد الكود تلقائياً عند الحفظ</small>
+                        </div>
+                        <div class="input-group">
+                            <label><i class="fas fa-user"></i> اسم العميل <span class="required">*</span></label>
+                            <input type="text" id="newCustomerName" class="modern-input" placeholder="اسم العميل أو الجهة" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label><i class="fas fa-phone"></i> رقم الهاتف</label>
+                            <input type="text" id="newCustomerPhone" class="modern-input" placeholder="77xxxxxxx">
+                        </div>
+                        <div class="input-group">
+                            <label><i class="fas fa-map-marker-alt"></i> العنوان</label>
+                            <input type="text" id="newCustomerAddress" class="modern-input" placeholder="المنطقة">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label><i class="fas fa-sticky-note"></i> ملاحظات</label>
+                        <input type="text" id="newCustomerNotes" class="modern-input" placeholder="ملاحظات حول العميل">
+                    </div>
+                    <button type="submit" class="btn-warning-sm" style="width:100%;padding:10px;font-size:13px;"><i class="fas fa-save"></i> حفظ العميل الجديد</button>
+                </form>
+                <div id="addCustomerResult" class="mt-1"></div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<script>
+    // ============================================================
+    // 1. التكوينات الأساسية
+    // ============================================================
+    const API_BASE = 'http://localhost:8080/api';
+    let currentCompanyCode = '';
+    let currentCompanyName = '';
+    let token = localStorage.getItem('jwtToken');
+
+    // التحقق من التوكن
+    if (!token) {
+        alert('🔒 غير مصرح لك! يرجى تسجيل الدخول.');
+        window.location.href = "login.html";
+    }
+
+    // ============================================================
+    // 2. 🔥 دالة جلب كود الشركة من عدة مصادر
+    // ============================================================
+    function getCompanyCode() {
+        // 1. حاول من localStorage
+        let code = localStorage.getItem('companyBusinessCode');
+
+        // 2. إذا لم يوجد، حاول من sessionStorage
+        if (!code) {
+            code = sessionStorage.getItem('companyBusinessCode');
+        }
+
+        // 3. إذا لم يوجد، حاول من معاملات الرابط (URL parameters)
+        if (!code) {
+            const params = new URLSearchParams(window.location.search);
+            code = params.get('company');
+        }
+
+        // 4. إذا لم يوجد، حاول من localStorage بمفتاح آخر
+        if (!code) {
+            code = localStorage.getItem('currentCompanyCode');
+        }
+
+        // حفظ القيمة في جميع الأماكن للتأكد من وجودها
+        if (code) {
+            localStorage.setItem('companyBusinessCode', code);
+            sessionStorage.setItem('companyBusinessCode', code);
+            localStorage.setItem('currentCompanyCode', code);
+            console.log(`✅ تم استرجاع كود الشركة: ${code}`);
+        } else {
+            console.warn('⚠️ لم يتم العثور على كود الشركة في أي مصدر');
+        }
+
+        return code;
+    }
+
+    // ============================================================
+    // 3. 🔥 قراءة بيانات الشركة (محسّنة لعرض اسم الشركة)
+    // ============================================================
+    function loadCompanyData() {
+        // جلب كود الشركة من عدة مصادر
+        currentCompanyCode = getCompanyCode();
+
+        // جلب اسم الشركة
+        currentCompanyName = localStorage.getItem('currentCompanyName') ||
+                            sessionStorage.getItem('companyName') ||
+                            '';
+
+        if (currentCompanyCode) {
+            // 🔥 عرض اسم الشركة في العنوان
+            const companyTitle = document.getElementById('lblCompanyTitle');
+            if (currentCompanyName) {
+                companyTitle.innerHTML = `<i class="fas fa-cubes"></i> 🏢 ${currentCompanyName}`;
+            } else {
+                companyTitle.innerHTML = `<i class="fas fa-cubes"></i> الشركة: ${currentCompanyCode}`;
+            }
+
+            // عرض الكود واسم الشركة في البادجات
+            document.getElementById('lblCompanyCode').innerText = currentCompanyCode;
+            document.getElementById('lblCompanyName').innerHTML = `🏢 ${currentCompanyName || currentCompanyCode}`;
+
+            // تحديث روابط الأزرار
+            const btnTransactions = document.getElementById('btnGoToTransactions');
+            btnTransactions.href = `inventory_transactions.html?company=${currentCompanyCode}&name=${encodeURIComponent(currentCompanyName)}`;
+            btnTransactions.style.display = 'inline-flex';
+
+            const btnAccounting = document.getElementById('btnGoToAccounting');
+            btnAccounting.href = `financial_operations.html?company=${currentCompanyCode}`;
+
+            // حفظ في localStorage للتأكد
+            localStorage.setItem('currentCompanyCode', currentCompanyCode);
+            localStorage.setItem('companyBusinessCode', currentCompanyCode);
+            if (currentCompanyName) {
+                localStorage.setItem('currentCompanyName', currentCompanyName);
+            }
+
+            console.log(`✅ تم تحميل بيانات الشركة: ${currentCompanyCode} - ${currentCompanyName}`);
+            return true;
+        } else {
+            console.warn('⚠️ لم يتم العثور على كود الشركة');
+            document.getElementById('lblCompanyTitle').innerHTML = `<i class="fas fa-cubes"></i> ⚠️ لم يتم اختيار شركة`;
+            document.getElementById('lblCompanyCode').innerText = '---';
+            document.getElementById('lblCompanyName').innerHTML = '⚠️';
+
+            // إضافة زر للذهاب لاختيار الشركة
+            const companyInfo = document.querySelector('.company-bar .company-info');
+            if (companyInfo) {
+                // إزالة أي زر موجود مسبقاً
+                const oldBtn = companyInfo.querySelector('.btn-select-company');
+                if (oldBtn) oldBtn.remove();
+
+                const btn = document.createElement('button');
+                btn.className = 'btn-select-company';
+                btn.style.marginRight = '10px';
+                btn.style.background = 'var(--neon-yellow)';
+                btn.style.color = '#1e293b';
+                btn.style.border = 'none';
+                btn.style.padding = '5px 14px';
+                btn.style.borderRadius = '8px';
+                btn.style.fontWeight = '700';
+                btn.style.cursor = 'pointer';
+                btn.innerHTML = '<i class="fas fa-building"></i> اختيار شركة';
+                btn.onclick = function() {
+                    window.location.href = 'financial_setup.html';
+                };
+                companyInfo.appendChild(btn);
+            }
+
+            showToast('⚠️ الرجاء اختيار شركة من الواجهة الرئيسية', 'error');
+            return false;
+        }
+    }
+
+    // ============================================================
+    // 4. الثيم
+    // ============================================================
+    function initTheme() {
+        const saved = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', saved);
+        updateThemeButtons(saved);
+        createParticles();
+    }
+
+    function updateThemeButtons(theme) {
+        document.querySelectorAll('.theme-option').forEach(b => {
+            b.classList.toggle('active', b.getAttribute('data-theme') === theme);
+        });
+    }
+
+    function setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        updateThemeButtons(theme);
+        createParticles();
+    }
+
+    document.querySelectorAll('.theme-option').forEach(b => {
+        b.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setTheme(b.getAttribute('data-theme'));
+        });
+    });
+
+    function createParticles() {
+        const container = document.getElementById('particles');
+        container.innerHTML = '';
+        if (document.documentElement.getAttribute('data-theme') !== 'dark') return;
+        for (let i = 0; i < 30; i++) {
+            const p = document.createElement('div');
+            p.classList.add('particle');
+            const s = Math.random() * 4 + 2;
+            p.style.cssText = `width:${s}px;height:${s}px;left:${Math.random()*100}%;animation-duration:${Math.random()*15+10}s;animation-delay:${Math.random()*15}s;`;
+            container.appendChild(p);
+        }
+    }
+
+    // ============================================================
+    // 5. دوال مساعدة
+    // ============================================================
+    function showToast(msg, mode = 'success') {
+        const t = document.getElementById('statusToast');
+        const icons = {
+            success: 'fa-check-circle',
+            error: 'fa-exclamation-circle',
+            warning: 'fa-exclamation-triangle',
+            info: 'fa-info-circle'
+        };
+        t.innerHTML = `<i class="fas ${icons[mode] || icons.info}"></i> ${msg}`;
+        t.className = `alert-toast alert-${mode}`;
+        t.style.display = 'block';
+        clearTimeout(t._timeout);
+        t._timeout = setTimeout(() => { t.style.display = 'none'; }, 3500);
+    }
+
+    function switchTab(event, tabId) {
+        document.querySelectorAll('.inner-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    function navigateTo(section) {
+        const map = {
+            items: 'panelItems',
+            addItem: 'panelAddItem',
+            suppliers: 'panelSuppliers',
+            addSupplier: 'panelAddSupplier',
+            customers: 'panelCustomers',
+            addCustomer: 'panelAddCustomer'
+        };
+        const tabId = map[section];
+        if (!tabId) return;
+
+        const btn = document.querySelector(`.inner-tabs .tab-btn[onclick*="${tabId}"]`);
+        if (btn) btn.click();
+
+        document.querySelectorAll('.sidebar-nav .nav-item').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.sidebar-nav .nav-item').forEach(b => {
+            const text = b.textContent.trim();
+            const match = section === 'items' ? 'المخزون' :
+                         section === 'addItem' ? 'إضافة صنف' :
+                         section === 'suppliers' ? 'الموردين' :
+                         section === 'addSupplier' ? 'إضافة مورد' :
+                         section === 'customers' ? 'العملاء' :
+                         section === 'addCustomer' ? 'إضافة عميل' : '';
+            if (text.includes(match)) b.classList.add('active');
+        });
+    }
+
+    function handleLogout() {
+        if (confirm("تسجيل الخروج؟")) {
+            localStorage.removeItem('jwtToken');
+            localStorage.removeItem('loggedInUser');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('companyBusinessCode');
+            localStorage.removeItem('currentCompanyCode');
+            localStorage.removeItem('currentCompanyName');
+            sessionStorage.clear();
+            window.location.href = "login.html";
+        }
+    }
+
+    function getHeaders() {
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) {
+            headers['Authorization'] = 'Bearer ' + token;
+        }
+        return headers;
+    }
+
+    // ============================================================
+    // 6. البحث في الجداول
+    // ============================================================
+    function filterTable(inputId, tableBodyId) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        const filter = input.value.toLowerCase();
+        const rows = document.getElementById(tableBodyId).getElementsByTagName('tr');
+        for (let row of rows) {
+            const cells = row.getElementsByTagName('td');
+            if (cells.length === 0) continue;
+            let found = false;
+            for (let cell of cells) {
+                if (cell.textContent.toLowerCase().includes(filter)) {
+                    found = true;
+                    break;
+                }
+            }
+            row.style.display = found ? '' : 'none';
+        }
+    }
+
+    // ============================================================
+    // 7. تصدير الجدول إلى Excel
+    // ============================================================
+    function exportTableToExcel(tableId, filename) {
+        const table = document.getElementById(tableId);
+        if (!table) {
+            showToast('❌ الجدول غير موجود', 'error');
+            return;
+        }
+
+        const clone = table.cloneNode(true);
+        clone.querySelectorAll('td:last-child').forEach(cell => {
+            cell.innerHTML = '';
+        });
+        clone.querySelectorAll('th:last-child').forEach(cell => {
+            cell.innerHTML = '';
+        });
+
+        let html = `
+            <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: 'Cairo', Arial, sans-serif; direction: rtl; padding: 20px; }
+                        table { border-collapse: collapse; width: 100%; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+                        th { background: #4f46e5; color: white; }
+                        tr:nth-child(even) { background: #f2f2f2; }
+                    </style>
+                </head>
+                <body>
+                    <h2 style="text-align:center;">${filename} - ${currentCompanyName || currentCompanyCode}</h2>
+                    <p style="text-align:center;color:#666;font-size:12px;">تاريخ التصدير: ${new Date().toLocaleDateString('ar-EG')}</p>
+                    ${clone.outerHTML}
+                    <p style="text-align:center;color:#999;font-size:10px;margin-top:20px;">تم التصدير من نظام فواتير المحاسبي - م. اصيل فتاحي</p>
+                </body>
+            </html>
+        `;
+
+        const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${filename}_${currentCompanyCode}_${new Date().toISOString().split('T')[0]}.xls`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showToast(`✅ تم تصدير ${filename} إلى Excel`, 'success');
+    }
+
+    // ============================================================
+    // 8. تصدير الجدول إلى Word
+    // ============================================================
+    function exportTableToWord(tableId, filename) {
+        const table = document.getElementById(tableId);
+        if (!table) {
+            showToast('❌ الجدول غير موجود', 'error');
+            return;
+        }
+
+        const clone = table.cloneNode(true);
+        clone.querySelectorAll('td:last-child').forEach(cell => {
+            cell.innerHTML = '';
+        });
+        clone.querySelectorAll('th:last-child').forEach(cell => {
+            cell.innerHTML = '';
+        });
+
+        let html = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office"
+                  xmlns:w="urn:schemas-microsoft-com:office:word"
+                  xmlns="http://www.w3.org/TR/REC-html40">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>${filename}</title>
+                    <!--[if gte mso 9]>
+                    <xml>
+                        <w:WordDocument>
+                            <w:View>Print</w:View>
+                            <w:Zoom>100</w:Zoom>
+                        </w:WordDocument>
+                    </xml>
+                    <![endif]-->
+                    <style>
+                        body { font-family: 'Cairo', Arial, sans-serif; direction: rtl; padding: 30px; }
+                        h2 { text-align: center; color: #2c3e50; font-size: 24px; margin-bottom: 5px; }
+                        .sub-title { text-align: center; color: #7f8c8d; font-size: 14px; margin-bottom: 20px; }
+                        table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+                        th, td { border: 1px solid #bdc3c7; padding: 8px 10px; text-align: right; }
+                        th { background: #34495e; color: white; font-weight: bold; }
+                        tr:nth-child(even) { background: #ecf0f1; }
+                        .footer { text-align: center; color: #95a5a6; font-size: 10px; margin-top: 25px; }
+                    </style>
+                </head>
+                <body>
+                    <h2>${filename}</h2>
+                    <div class="sub-title">${currentCompanyName || currentCompanyCode}</div>
+                    <p style="text-align:center;color:#95a5a6;font-size:12px;">تاريخ التصدير: ${new Date().toLocaleDateString('ar-EG')}</p>
+                    ${clone.outerHTML}
+                    <div class="footer">تم التصدير من نظام فواتير المحاسبي - م. اصيل فتاحي</div>
+                </body>
+            </html>
+        `;
+
+        const blob = new Blob([html], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${filename}_${currentCompanyCode}_${new Date().toISOString().split('T')[0]}.doc`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showToast(`✅ تم تصدير ${filename} إلى Word`, 'success');
+    }
+
+    // ============================================================
+    // 9. جلب وعرض الأصناف
+    // ============================================================
+    async function loadItems() {
+        if (!currentCompanyCode) {
+            showToast('⚠️ لا يوجد كود شركة', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/items/company/${currentCompanyCode}`, {
+                headers: getHeaders()
+            });
+            if (!response.ok) throw new Error('فشل جلب الأصناف');
+            const items = await response.json();
+            renderItemsTable(items);
+            updateStats(items);
+            document.getElementById('sideItemCount').innerText = items.length || 0;
+        } catch (error) {
+            document.getElementById('itemsTableBody').innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding: 20px;"><i class="fas fa-exclamation-triangle"></i> ${error.message}</td></tr>`;
+            showToast('❌ ' + error.message, 'error');
+        }
+    }
+
+    function renderItemsTable(items) {
+        const tbody = document.getElementById('itemsTableBody');
+        tbody.innerHTML = '';
+        if (!items || items.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding: 20px;"><i class="fas fa-inbox"></i> لا توجد أصناف</td></tr>`;
+            return;
+        }
+        items.forEach(item => {
+            let stockClass = 'stock-high';
+            let stockLabel = '🟢 متوفر';
+            if (item.currentStock <= 5) {
+                stockClass = 'stock-low';
+                stockLabel = '🔴 منخفض';
+            } else if (item.currentStock <= 20) {
+                stockClass = 'stock-medium';
+                stockLabel = '🟡 متوسط';
+            }
+
+            tbody.innerHTML += `
+                <tr>
+                    <td><span class="code-highlight">${item.itemCode}</span></td>
+                    <td><b>${item.nameAr}</b></td>
+                    <td>${item.unit}</td>
+                    <td style="font-family:monospace;">${Number(item.purchasePrice).toFixed(2)}</td>
+                    <td style="font-family:monospace;">${Number(item.salePrice).toFixed(2)}</td>
+                    <td style="font-family:monospace;font-weight:700;">${Number(item.currentStock).toFixed(2)}</td>
+                    <td><span class="type-badge ${stockClass}">${stockLabel}</span></td>
+                </tr>
+            `;
+        });
+    }
+
+    function updateStats(items) {
+        let totalItems = items.length;
+        let totalStock = 0;
+        let totalValue = 0;
+        let totalSalesValue = 0;
+
+        items.forEach(item => {
+            totalStock += Number(item.currentStock);
+            totalValue += Number(item.currentStock) * Number(item.purchasePrice);
+            totalSalesValue += Number(item.currentStock) * Number(item.salePrice);
+        });
+
+        document.getElementById('lblTotalItems').innerText = totalItems;
+        document.getElementById('lblTotalStock').innerText = totalStock.toFixed(2);
+        document.getElementById('lblTotalValue').innerText = totalValue.toFixed(2);
+        document.getElementById('lblTotalSalesValue').innerText = totalSalesValue.toFixed(2);
+    }
+
+    // ============================================================
+    // 10. جلب وعرض الموردين
+    // ============================================================
+    async function loadSuppliers() {
+        if (!currentCompanyCode) {
+            showToast('⚠️ لا يوجد كود شركة', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/suppliers/company/${currentCompanyCode}`, {
+                headers: getHeaders()
+            });
+            if (!response.ok) throw new Error('فشل جلب الموردين');
+            const suppliers = await response.json();
+            renderSuppliersTable(suppliers);
+            document.getElementById('sideSupplierCount').innerText = suppliers.length || 0;
+        } catch (error) {
+            document.getElementById('suppliersTableBody').innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding: 20px;"><i class="fas fa-exclamation-triangle"></i> ${error.message}</td></tr>`;
+            showToast('❌ ' + error.message, 'error');
+        }
+    }
+
+    function renderSuppliersTable(suppliers) {
+        const tbody = document.getElementById('suppliersTableBody');
+        tbody.innerHTML = '';
+        if (!suppliers || suppliers.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding: 20px;"><i class="fas fa-inbox"></i> لا يوجد موردين</td></tr>`;
+            return;
+        }
+        suppliers.forEach((s, index) => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td><span class="code-highlight">${s.supplierCode}</span></td>
+                    <td><b>${s.name}</b></td>
+                    <td>${s.phone || '---'}</td>
+                    <td>${s.address || '---'}</td>
+                    <td>
+                        <button class="btn-sm btn-danger-sm" onclick="deleteSupplier(${s.id}, '${s.supplierCode}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // ============================================================
+    // 11. جلب وعرض العملاء
+    // ============================================================
+    async function loadCustomers() {
+        if (!currentCompanyCode) {
+            showToast('⚠️ لا يوجد كود شركة', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/customers/company/${currentCompanyCode}`, {
+                headers: getHeaders()
+            });
+            if (!response.ok) throw new Error('فشل جلب العملاء');
+            const customers = await response.json();
+            renderCustomersTable(customers);
+            document.getElementById('sideCustomerCount').innerText = customers.length || 0;
+        } catch (error) {
+            document.getElementById('customersTableBody').innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding: 20px;"><i class="fas fa-exclamation-triangle"></i> ${error.message}</td></tr>`;
+            showToast('❌ ' + error.message, 'error');
+        }
+    }
+
+    function renderCustomersTable(customers) {
+        const tbody = document.getElementById('customersTableBody');
+        tbody.innerHTML = '';
+        if (!customers || customers.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding: 20px;"><i class="fas fa-inbox"></i> لا يوجد عملاء</td></tr>`;
+            return;
+        }
+        customers.forEach((c, index) => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td><span class="code-highlight">${c.customerCode}</span></td>
+                    <td><b>${c.name}</b></td>
+                    <td>${c.phone || '---'}</td>
+                    <td>${c.address || '---'}</td>
+                    <td>
+                        <button class="btn-sm btn-danger-sm" onclick="deleteCustomer(${c.id}, '${c.customerCode}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // ============================================================
+    // 12. حذف مورد
+    // ============================================================
+    async function deleteSupplier(id, code) {
+        if (!confirm(`⚠️ هل أنت متأكد من حذف المورد "${code}"؟`)) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/suppliers/${id}`, {
+                method: 'DELETE',
+                headers: getHeaders()
+            });
+            if (response.ok) {
+                showToast(`✅ تم حذف المورد ${code} بنجاح`, 'success');
+                await Promise.all([loadSuppliers(), loadItems()]);
+            } else {
+                const err = await response.json();
+                showToast(`❌ ${err.message || 'فشل حذف المورد'}`, 'error');
+            }
+        } catch (error) {
+            showToast('❌ خطأ في الاتصال', 'error');
+        }
+    }
+
+    // ============================================================
+    // 13. حذف عميل
+    // ============================================================
+    async function deleteCustomer(id, code) {
+        if (!confirm(`⚠️ هل أنت متأكد من حذف العميل "${code}"؟`)) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/customers/${id}`, {
+                method: 'DELETE',
+                headers: getHeaders()
+            });
+            if (response.ok) {
+                showToast(`✅ تم حذف العميل ${code} بنجاح`, 'success');
+                await Promise.all([loadCustomers(), loadItems()]);
+            } else {
+                const err = await response.json();
+                showToast(`❌ ${err.message || 'فشل حذف العميل'}`, 'error');
+            }
+        } catch (error) {
+            showToast('❌ خطأ في الاتصال', 'error');
+        }
+    }
+
+    // ============================================================
+    // 14. إضافة صنف جديد
+    // ============================================================
+    async function submitNewItem(event) {
+        event.preventDefault();
+
+        if (!currentCompanyCode) {
+            showToast('⚠️ لا يوجد كود شركة', 'error');
+            return;
+        }
+
+        const data = {
+            companyBusinessCode: currentCompanyCode,
+            itemCode: document.getElementById('newItemCode').value,
+            nameAr: document.getElementById('newItemNameAr').value,
+            nameEn: document.getElementById('newItemNameEn').value || '',
+            unit: document.getElementById('newItemUnit').value,
+            purchasePrice: parseFloat(document.getElementById('newItemPurchasePrice').value) || 0,
+            salePrice: parseFloat(document.getElementById('newItemSalePrice').value) || 0,
+            currentStock: parseFloat(document.getElementById('newItemCurrentStock').value) || 0
+        };
+
+        try {
+            const response = await fetch(`${API_BASE}/items`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify(data)
+            });
+            if (response.ok) {
+                document.getElementById('addItemResult').innerHTML = `<div class="alert-success" style="padding:10px;border-radius:8px;text-align:center;">✅ تم إضافة الصنف بنجاح!</div>`;
+                document.getElementById('addItemForm').reset();
+                document.getElementById('newItemPurchasePrice').value = 0;
+                document.getElementById('newItemSalePrice').value = 0;
+                document.getElementById('newItemCurrentStock').value = 0;
+                await Promise.all([loadItems(), loadSuppliers(), loadCustomers()]);
+                showToast('✅ تم إضافة الصنف بنجاح', 'success');
+            } else {
+                const err = await response.json();
+                document.getElementById('addItemResult').innerHTML = `<div class="alert-error" style="padding:10px;border-radius:8px;text-align:center;">❌ خطأ: ${err.message || 'فشل إضافة الصنف'}</div>`;
+                showToast('❌ فشل إضافة الصنف', 'error');
+            }
+        } catch (error) {
+            document.getElementById('addItemResult').innerHTML = `<div class="alert-error" style="padding:10px;border-radius:8px;text-align:center;">❌ خطأ في الاتصال</div>`;
+            showToast('❌ خطأ في الاتصال', 'error');
+        }
+    }
+
+    // ============================================================
+    // 15. إضافة مورد جديد
+    // ============================================================
+    async function submitNewSupplier(event) {
+        event.preventDefault();
+
+        if (!currentCompanyCode) {
+            showToast('⚠️ لا يوجد كود شركة', 'error');
+            return;
+        }
+
+        const data = {
+            companyBusinessCode: currentCompanyCode,
+            supplierCode: '',
+            name: document.getElementById('newSupplierName').value,
+            phone: document.getElementById('newSupplierPhone').value || '',
+            address: document.getElementById('newSupplierAddress').value || '',
+            notes: document.getElementById('newSupplierNotes').value || ''
+        };
+
+        try {
+            const response = await fetch(`${API_BASE}/suppliers`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify(data)
+            });
+            if (response.ok) {
+                const result = await response.json();
+                document.getElementById('addSupplierResult').innerHTML = `
+                    <div class="alert-success" style="padding:10px;border-radius:8px;text-align:center;">
+                        ✅ تم حفظ المورد <b>${result.name}</b> برقم: <span class="code-highlight">${result.supplierCode}</span>
+                    </div>
+                `;
+                document.getElementById('addSupplierForm').reset();
+                await Promise.all([loadSuppliers(), loadItems()]);
+                showToast(`✅ تم حفظ المورد ${result.supplierCode}`, 'success');
+                document.getElementById('newSupplierCode').placeholder = 'سيتم توليده تلقائياً';
+            } else {
+                const err = await response.json();
+                document.getElementById('addSupplierResult').innerHTML = `<div class="alert-error" style="padding:10px;border-radius:8px;text-align:center;">❌ خطأ: ${err.message || 'فشل حفظ المورد'}</div>`;
+                showToast('❌ فشل حفظ المورد', 'error');
+            }
+        } catch (error) {
+            document.getElementById('addSupplierResult').innerHTML = `<div class="alert-error" style="padding:10px;border-radius:8px;text-align:center;">❌ خطأ في الاتصال</div>`;
+            showToast('❌ خطأ في الاتصال', 'error');
+        }
+    }
+
+    // ============================================================
+    // 16. إضافة عميل جديد
+    // ============================================================
+    async function submitNewCustomer(event) {
+        event.preventDefault();
+
+        if (!currentCompanyCode) {
+            showToast('⚠️ لا يوجد كود شركة', 'error');
+            return;
+        }
+
+        const data = {
+            companyBusinessCode: currentCompanyCode,
+            customerCode: '',
+            name: document.getElementById('newCustomerName').value,
+            phone: document.getElementById('newCustomerPhone').value || '',
+            address: document.getElementById('newCustomerAddress').value || '',
+            notes: document.getElementById('newCustomerNotes').value || ''
+        };
+
+        try {
+            const response = await fetch(`${API_BASE}/customers`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify(data)
+            });
+            if (response.ok) {
+                const result = await response.json();
+                document.getElementById('addCustomerResult').innerHTML = `
+                    <div class="alert-success" style="padding:10px;border-radius:8px;text-align:center;">
+                        ✅ تم حفظ العميل <b>${result.name}</b> برقم: <span class="code-highlight">${result.customerCode}</span>
+                    </div>
+                `;
+                document.getElementById('addCustomerForm').reset();
+                await Promise.all([loadCustomers(), loadItems()]);
+                showToast(`✅ تم حفظ العميل ${result.customerCode}`, 'success');
+                document.getElementById('newCustomerCode').placeholder = 'سيتم توليده تلقائياً';
+            } else {
+                const err = await response.json();
+                document.getElementById('addCustomerResult').innerHTML = `<div class="alert-error" style="padding:10px;border-radius:8px;text-align:center;">❌ خطأ: ${err.message || 'فشل حفظ العميل'}</div>`;
+                showToast('❌ فشل حفظ العميل', 'error');
+            }
+        } catch (error) {
+            document.getElementById('addCustomerResult').innerHTML = `<div class="alert-error" style="padding:10px;border-radius:8px;text-align:center;">❌ خطأ في الاتصال</div>`;
+            showToast('❌ خطأ في الاتصال', 'error');
+        }
+    }
+
+    // ============================================================
+    // 17. تحديث جميع البيانات
+    // ============================================================
+    async function refreshAllData() {
+        showToast('🔄 جاري تحديث البيانات...', 'info');
+        await Promise.all([loadItems(), loadSuppliers(), loadCustomers()]);
+        showToast('✅ تم تحديث جميع البيانات', 'success');
+    }
+
+    // ============================================================
+    // 18. التهيئة
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', async function() {
+        initTheme();
+
+        // تحميل بيانات الشركة
+        const hasCompany = loadCompanyData();
+
+        if (hasCompany) {
+            // تحميل جميع البيانات
+            await Promise.all([
+                loadItems(),
+                loadSuppliers(),
+                loadCustomers()
+            ]);
+            showToast(`✅ مرحباً بك في إدارة المخزون - ${currentCompanyName || currentCompanyCode}`, 'success');
+        } else {
+            showToast('⚠️ الرجاء اختيار شركة من الواجهة الرئيسية', 'error');
+        }
+    });
+</script>
+
+</body>
+</html>
+
+
+<!--<!DOCTYPE html>-->
+<!--<html lang="ar" dir="rtl">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <title>إدارة المخزون - الأصناف والموردين والعملاء</title>-->
+
+<!--    <link rel="preconnect" href="https://fonts.googleapis.com">-->
+<!--    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>-->
+<!--    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">-->
+<!--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">-->
+
+<!--    <style>-->
+<!--        /* ===== نفس الـ CSS السابق مع إضافات تحسينية ===== */-->
+<!--        :root {-->
+<!--            &#45;&#45;bg-deep: #0b0e14;-->
+<!--            &#45;&#45;bg-card: #131a26;-->
+<!--            &#45;&#45;bg-input: #1b2433;-->
+<!--            &#45;&#45;primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);-->
+<!--            &#45;&#45;neon-cyan: #06b6d4;-->
+<!--            &#45;&#45;neon-green: #10b981;-->
+<!--            &#45;&#45;neon-red: #f43f5e;-->
+<!--            &#45;&#45;neon-purple: #a855f7;-->
+<!--            &#45;&#45;neon-yellow: #f59e0b;-->
+<!--            &#45;&#45;text-main: #f8fafc;-->
+<!--            &#45;&#45;text-muted: #94a3b8;-->
+<!--            &#45;&#45;border-glow: #222f45;-->
+<!--            &#45;&#45;shadow-glow: 0 0 15px rgba(99, 102, 241, 0.25);-->
+<!--            &#45;&#45;sidebar-width: 250px;-->
+<!--            &#45;&#45;radius: 16px;-->
+<!--            &#45;&#45;transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);-->
+<!--            &#45;&#45;glow-cyan: 0 0 20px rgba(6, 182, 212, 0.15);-->
+<!--            &#45;&#45;glow-green: 0 0 20px rgba(16, 185, 129, 0.15);-->
+<!--            &#45;&#45;glow-purple: 0 0 20px rgba(168, 85, 247, 0.15);-->
+<!--        }-->
+
+<!--        [data-theme="light"] {-->
+<!--            &#45;&#45;bg-deep: #f0f4f8;-->
+<!--            &#45;&#45;bg-card: #ffffff;-->
+<!--            &#45;&#45;bg-input: #f1f5f9;-->
+<!--            &#45;&#45;primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);-->
+<!--            &#45;&#45;neon-cyan: #0891b2;-->
+<!--            &#45;&#45;neon-green: #059669;-->
+<!--            &#45;&#45;neon-red: #dc2626;-->
+<!--            &#45;&#45;neon-purple: #7c3aed;-->
+<!--            &#45;&#45;text-main: #1e293b;-->
+<!--            &#45;&#45;text-muted: #475569;-->
+<!--            &#45;&#45;border-glow: #cbd5e1;-->
+<!--            &#45;&#45;shadow-glow: 0 0 20px rgba(79, 70, 229, 0.15);-->
+<!--            &#45;&#45;glow-cyan: 0 0 20px rgba(8, 145, 178, 0.1);-->
+<!--            &#45;&#45;glow-green: 0 0 20px rgba(5, 150, 105, 0.1);-->
+<!--            &#45;&#45;glow-purple: 0 0 20px rgba(124, 58, 237, 0.1);-->
+<!--        }-->
+
+<!--        * { margin: 0; padding: 0; box-sizing: border-box; transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease; }-->
+
+<!--        body {-->
+<!--            font-family: 'Cairo', sans-serif;-->
+<!--            background-color: var(&#45;&#45;bg-deep);-->
+<!--            color: var(&#45;&#45;text-main);-->
+<!--            margin: 0;-->
+<!--            padding: 12px;-->
+<!--            min-height: 100vh;-->
+<!--            overflow-x: hidden;-->
+<!--        }-->
+
+<!--        [data-theme="dark"] .particles {-->
+<!--            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; overflow: hidden; pointer-events: none;-->
+<!--        }-->
+<!--        [data-theme="dark"] .particle {-->
+<!--            position: absolute; background: rgba(255,255,255,0.04); border-radius: 50%;-->
+<!--            animation: floatParticle linear infinite;-->
+<!--        }-->
+<!--        @keyframes floatParticle {-->
+<!--            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }-->
+<!--            10% { opacity: 0.5; }-->
+<!--            90% { opacity: 0.5; }-->
+<!--            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }-->
+<!--        }-->
+
+<!--        .app-container {-->
+<!--            display: flex;-->
+<!--            gap: 12px;-->
+<!--            max-width: 100%;-->
+<!--            position: relative;-->
+<!--            z-index: 1;-->
+<!--            height: calc(100vh - 24px);-->
+<!--            overflow: hidden;-->
+<!--        }-->
+
+<!--        .sidebar {-->
+<!--            width: var(&#45;&#45;sidebar-width);-->
+<!--            min-width: var(&#45;&#45;sidebar-width);-->
+<!--            background: var(&#45;&#45;bg-card);-->
+<!--            border: 1px solid var(&#45;&#45;border-glow);-->
+<!--            border-radius: var(&#45;&#45;radius);-->
+<!--            padding: 16px 14px;-->
+<!--            display: flex;-->
+<!--            flex-direction: column;-->
+<!--            gap: 12px;-->
+<!--            overflow-y: auto;-->
+<!--            animation: slideDown 0.6s ease;-->
+<!--            backdrop-filter: blur(10px);-->
+<!--        }-->
+
+<!--        @keyframes slideDown {-->
+<!--            from { opacity: 0; transform: translateX(-30px); }-->
+<!--            to { opacity: 1; transform: translateX(0); }-->
+<!--        }-->
+
+<!--        .sidebar-logo {-->
+<!--            text-align: center;-->
+<!--            padding-bottom: 12px;-->
+<!--            border-bottom: 1px solid var(&#45;&#45;border-glow);-->
+<!--            position: relative;-->
+<!--        }-->
+
+<!--        .sidebar-logo::after {-->
+<!--            content: '';-->
+<!--            position: absolute;-->
+<!--            bottom: -1px;-->
+<!--            left: 25%;-->
+<!--            width: 50%;-->
+<!--            height: 2px;-->
+<!--            background: var(&#45;&#45;primary-gradient);-->
+<!--            border-radius: 10px;-->
+<!--        }-->
+
+<!--        .sidebar-logo h2 {-->
+<!--            font-size: 18px;-->
+<!--            font-weight: 900;-->
+<!--            background: var(&#45;&#45;primary-gradient);-->
+<!--            -webkit-background-clip: text;-->
+<!--            -webkit-text-fill-color: transparent;-->
+<!--            letter-spacing: -0.5px;-->
+<!--        }-->
+
+<!--        .sidebar-logo p {-->
+<!--            font-size: 10px;-->
+<!--            color: var(&#45;&#45;text-muted);-->
+<!--            -webkit-text-fill-color: var(&#45;&#45;text-muted);-->
+<!--            margin-top: 2px;-->
+<!--        }-->
+
+<!--        .sidebar-logo .developer-name {-->
+<!--            font-size: 9px;-->
+<!--            color: var(&#45;&#45;neon-cyan);-->
+<!--            opacity: 0.7;-->
+<!--            -webkit-text-fill-color: var(&#45;&#45;neon-cyan);-->
+<!--        }-->
+
+<!--        .sidebar-nav {-->
+<!--            display: flex;-->
+<!--            flex-direction: column;-->
+<!--            gap: 4px;-->
+<!--            flex: 1;-->
+<!--        }-->
+
+<!--        .sidebar-nav .nav-item {-->
+<!--            display: flex;-->
+<!--            align-items: center;-->
+<!--            gap: 10px;-->
+<!--            padding: 10px 14px;-->
+<!--            border-radius: 10px;-->
+<!--            color: var(&#45;&#45;text-muted);-->
+<!--            cursor: pointer;-->
+<!--            transition: var(&#45;&#45;transition);-->
+<!--            border: 1px solid transparent;-->
+<!--            font-weight: 700;-->
+<!--            font-size: 12px;-->
+<!--            background: transparent;-->
+<!--            width: 100%;-->
+<!--            text-align: right;-->
+<!--            font-family: 'Cairo', sans-serif;-->
+<!--            position: relative;-->
+<!--        }-->
+
+<!--        .sidebar-nav .nav-item:hover {-->
+<!--            background: var(&#45;&#45;bg-input);-->
+<!--            color: var(&#45;&#45;text-main);-->
+<!--            border-color: var(&#45;&#45;border-glow);-->
+<!--            transform: translateX(-4px);-->
+<!--        }-->
+
+<!--        .sidebar-nav .nav-item.active {-->
+<!--            background: var(&#45;&#45;primary-gradient);-->
+<!--            color: white;-->
+<!--            border-color: transparent;-->
+<!--            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);-->
+<!--            transform: translateX(-4px);-->
+<!--        }-->
+
+<!--        .sidebar-nav .nav-item i {-->
+<!--            width: 20px;-->
+<!--            text-align: center;-->
+<!--            font-size: 14px;-->
+<!--        }-->
+
+<!--        .sidebar-nav .nav-item .badge-count {-->
+<!--            margin-right: auto;-->
+<!--            background: rgba(255,255,255,0.1);-->
+<!--            padding: 1px 8px;-->
+<!--            border-radius: 20px;-->
+<!--            font-size: 10px;-->
+<!--        }-->
+
+<!--        .sidebar-nav .nav-item.active .badge-count {-->
+<!--            background: rgba(255,255,255,0.2);-->
+<!--        }-->
+
+<!--        .sidebar-footer {-->
+<!--            border-top: 1px solid var(&#45;&#45;border-glow);-->
+<!--            padding-top: 12px;-->
+<!--            display: flex;-->
+<!--            flex-direction: column;-->
+<!--            gap: 6px;-->
+<!--        }-->
+
+<!--        .sidebar-footer .theme-toggle-btn {-->
+<!--            background: var(&#45;&#45;bg-input);-->
+<!--            border: 1px solid var(&#45;&#45;border-glow);-->
+<!--            border-radius: 40px;-->
+<!--            padding: 4px;-->
+<!--            cursor: pointer;-->
+<!--            display: flex;-->
+<!--            align-items: center;-->
+<!--            gap: 6px;-->
+<!--            transition: var(&#45;&#45;transition);-->
+<!--        }-->
+
+<!--        .sidebar-footer .theme-toggle-btn:hover {-->
+<!--            border-color: var(&#45;&#45;neon-cyan);-->
+<!--            box-shadow: var(&#45;&#45;glow-cyan);-->
+<!--        }-->
+
+<!--        .sidebar-footer .theme-option {-->
+<!--            padding: 5px 14px;-->
+<!--            border-radius: 35px;-->
+<!--            font-size: 11px;-->
+<!--            font-weight: 700;-->
+<!--            transition: var(&#45;&#45;transition);-->
+<!--            cursor: pointer;-->
+<!--            background: transparent;-->
+<!--            color: var(&#45;&#45;text-muted);-->
+<!--        }-->
+
+<!--        .sidebar-footer .theme-option.active {-->
+<!--            background: var(&#45;&#45;primary-gradient);-->
+<!--            color: white;-->
+<!--        }-->
+
+<!--        .sidebar-footer .logout-btn {-->
+<!--            background: transparent;-->
+<!--            border: 1px solid var(&#45;&#45;neon-red);-->
+<!--            color: var(&#45;&#45;neon-red);-->
+<!--            padding: 8px;-->
+<!--            border-radius: 10px;-->
+<!--            font-size: 12px;-->
+<!--            font-weight: 700;-->
+<!--            cursor: pointer;-->
+<!--            transition: var(&#45;&#45;transition);-->
+<!--            display: flex;-->
+<!--            align-items: center;-->
+<!--            justify-content: center;-->
+<!--            gap: 6px;-->
+<!--            width: 100%;-->
+<!--            font-family: 'Cairo', sans-serif;-->
+<!--        }-->
+
+<!--        .sidebar-footer .logout-btn:hover {-->
+<!--            background: rgba(244, 63, 94, 0.1);-->
+<!--            transform: translateY(-2px);-->
+<!--            box-shadow: 0 4px 15px rgba(244, 63, 94, 0.2);-->
+<!--        }-->
+
+<!--        .main-content {-->
+<!--            flex: 1;-->
+<!--            display: flex;-->
+<!--            flex-direction: column;-->
+<!--            gap: 12px;-->
+<!--            overflow: hidden;-->
+<!--            min-width: 0;-->
+<!--        }-->
+
+<!--        .company-bar {-->
+<!--            background: var(&#45;&#45;bg-card);-->
+<!--            border: 1px solid var(&#45;&#45;border-glow);-->
+<!--            border-radius: var(&#45;&#45;radius);-->
+<!--            padding: 12px 18px;-->
+<!--            display: flex;-->
+<!--            justify-content: space-between;-->
+<!--            align-items: center;-->
+<!--            flex-wrap: wrap;-->
+<!--            gap: 8px;-->
+<!--            animation: fadeInUp 0.8s ease;-->
+<!--            box-shadow: var(&#45;&#45;shadow-glow);-->
+<!--        }-->
+
+<!--        @keyframes fadeInUp {-->
+<!--            from { opacity: 0; transform: translateY(20px); }-->
+<!--            to { opacity: 1; transform: translateY(0); }-->
+<!--        }-->
+
+<!--        .company-bar .company-info {-->
+<!--            display: flex;-->
+<!--            align-items: center;-->
+<!--            gap: 12px;-->
+<!--            flex-wrap: wrap;-->
+<!--        }-->
+
+<!--        .company-bar .company-info h1 {-->
+<!--            font-size: 16px;-->
+<!--            font-weight: 900;-->
+<!--            color: var(&#45;&#45;text-main);-->
+<!--        }-->
+
+<!--        .company-bar .company-info h1 i {-->
+<!--            background: var(&#45;&#45;primary-gradient);-->
+<!--            -webkit-background-clip: text;-->
+<!--            -webkit-text-fill-color: transparent;-->
+<!--        }-->
+
+<!--        .company-bar .company-info .badge-code {-->
+<!--            background: var(&#45;&#45;bg-input);-->
+<!--            border: 1px solid var(&#45;&#45;border-glow);-->
+<!--            padding: 3px 12px;-->
+<!--            border-radius: 20px;-->
+<!--            font-size: 11px;-->
+<!--            font-weight: 700;-->
+<!--            color: var(&#45;&#45;neon-cyan);-->
+<!--            transition: var(&#45;&#45;transition);-->
+<!--        }-->
+
+<!--        .company-bar .company-info .badge-code.id-badge {-->
+<!--            border-color: var(&#45;&#45;neon-purple);-->
+<!--            color: var(&#45;&#45;neon-purple);-->
+<!--        }-->
+
+<!--        .btn-go-to-transactions {-->
+<!--            background: var(&#45;&#45;neon-green);-->
+<!--            color: white;-->
+<!--            border: none;-->
+<!--            padding: 8px 18px;-->
+<!--            border-radius: 10px;-->
+<!--            font-weight: 700;-->
+<!--            font-size: 12px;-->
+<!--            cursor: pointer;-->
+<!--            transition: var(&#45;&#45;transition);-->
+<!--            font-family: 'Cairo', sans-serif;-->
+<!--            display: inline-flex;-->
+<!--            align-items: center;-->
+<!--            gap: 8px;-->
+<!--            text-decoration: none;-->
+<!--        }-->
+
+<!--        .btn-go-to-transactions:hover {-->
+<!--            transform: translateY(-2px) scale(1.02);-->
+<!--            box-shadow: 0 4px 25px rgba(16, 185, 129, 0.5);-->
+<!--            color: white;-->
+<!--            text-decoration: none;-->
+<!--        }-->
+
+<!--        .btn-go-to-accounting {-->
+<!--            background: var(&#45;&#45;primary-gradient);-->
+<!--            color: white;-->
+<!--            border: none;-->
+<!--            padding: 8px 18px;-->
+<!--            border-radius: 10px;-->
+<!--            font-weight: 700;-->
+<!--            font-size: 12px;-->
+<!--            cursor: pointer;-->
+<!--            transition: var(&#45;&#45;transition);-->
+<!--            font-family: 'Cairo', sans-serif;-->
+<!--            display: inline-flex;-->
+<!--            align-items: center;-->
+<!--            gap: 8px;-->
+<!--            text-decoration: none;-->
+<!--        }-->
+
+<!--        .btn-go-to-accounting:hover {-->
+<!--            transform: translateY(-2px) scale(1.02);-->
+<!--            box-shadow: 0 4px 25px rgba(99, 102, 241, 0.5);-->
+<!--            color: white;-->
+<!--            text-decoration: none;-->
+<!--        }-->
+
+<!--        .stats-grid {-->
+<!--            display: grid;-->
+<!--            grid-template-columns: repeat(4, 1fr);-->
+<!--            gap: 10px;-->
+<!--        }-->
+
+<!--        @media (max-width: 992px) {-->
+<!--            .stats-grid { grid-template-columns: repeat(2, 1fr); }-->
+<!--        }-->
+<!--        @media (max-width: 576px) {-->
+<!--            .stats-grid { grid-template-columns: 1fr; }-->
+<!--        }-->
+
+<!--        .stat-card {-->
+<!--            background: var(&#45;&#45;bg-card);-->
+<!--            border: 1px solid var(&#45;&#45;border-glow);-->
+<!--            border-radius: var(&#45;&#45;radius);-->
+<!--            padding: 12px 16px;-->
+<!--            transition: var(&#45;&#45;transition);-->
+<!--            position: relative;-->
+<!--            overflow: hidden;-->
+<!--        }-->
+
+<!--        .stat-card::before {-->
+<!--            content: '';-->
+<!--            position: absolute;-->
+<!--            top: 0;-->
+<!--            left: 0;-->
+<!--            right: 0;-->
+<!--            height: 2px;-->
+<!--            background: var(&#45;&#45;primary-gradient);-->
+<!--            opacity: 0;-->
+<!--            transition: var(&#45;&#45;transition);-->
+<!--        }-->
+
+<!--        .stat-card:hover::before {-->
+<!--            opacity: 1;-->
+<!--        }-->
+
+<!--        .stat-card:hover {-->
+<!--            transform: translateY(-3px);-->
+<!--            border-color: var(&#45;&#45;neon-purple);-->
+<!--            box-shadow: var(&#45;&#45;shadow-glow);-->
+<!--        }-->
+
+<!--        .stat-card .label {-->
+<!--            font-size: 9px;-->
+<!--            color: var(&#45;&#45;text-muted);-->
+<!--            font-weight: 700;-->
+<!--            text-transform: uppercase;-->
+<!--            letter-spacing: 0.5px;-->
+<!--        }-->
+
+<!--        .stat-card .value {-->
+<!--            font-size: 20px;-->
+<!--            font-weight: 900;-->
+<!--            font-family: monospace, 'Cairo';-->
+<!--            margin: 3px 0;-->
+<!--        }-->
+
+<!--        .stat-card .sub {-->
+<!--            font-size: 10px;-->
+<!--            color: var(&#45;&#45;text-muted);-->
+<!--        }-->
+
+<!--        .stat-card .stat-icon {-->
+<!--            position: absolute;-->
+<!--            top: 10px;-->
+<!--            left: 10px;-->
+<!--            font-size: 20px;-->
+<!--            opacity: 0.1;-->
+<!--        }-->
+
+<!--        .text-cyan { color: var(&#45;&#45;neon-cyan); }-->
+<!--        .text-green { color: var(&#45;&#45;neon-green); }-->
+<!--        .text-red { color: var(&#45;&#45;neon-red); }-->
+<!--        .text-purple { color: var(&#45;&#45;neon-purple); }-->
+<!--        .text-yellow { color: var(&#45;&#45;neon-yellow); }-->
+
+<!--        .content-area {-->
+<!--            flex: 1;-->
+<!--            background: var(&#45;&#45;bg-card);-->
+<!--            border: 1px solid var(&#45;&#45;border-glow);-->
+<!--            border-radius: var(&#45;&#45;radius);-->
+<!--            padding: 16px;-->
+<!--            overflow-y: auto;-->
+<!--            min-height: 0;-->
+<!--        }-->
+
+<!--        .content-area::-webkit-scrollbar {-->
+<!--            width: 5px;-->
+<!--        }-->
+<!--        .content-area::-webkit-scrollbar-track {-->
+<!--            background: var(&#45;&#45;bg-deep);-->
+<!--            border-radius: 10px;-->
+<!--        }-->
+<!--        .content-area::-webkit-scrollbar-thumb {-->
+<!--            background: var(&#45;&#45;neon-cyan);-->
+<!--            border-radius: 10px;-->
+<!--        }-->
+
+<!--        .inner-tabs {-->
+<!--            display: flex;-->
+<!--            gap: 4px;-->
+<!--            margin-bottom: 14px;-->
+<!--            background: var(&#45;&#45;bg-deep);-->
+<!--            padding: 4px;-->
+<!--            border-radius: 10px;-->
+<!--            border: 1px solid var(&#45;&#45;border-glow);-->
+<!--            flex-wrap: wrap;-->
+<!--        }-->
+
+<!--        .inner-tabs .tab-btn {-->
+<!--            flex: 1;-->
+<!--            background: transparent;-->
+<!--            border: none;-->
+<!--            color: var(&#45;&#45;text-muted);-->
+<!--            padding: 8px 12px;-->
+<!--            border-radius: 8px;-->
+<!--            cursor: pointer;-->
+<!--            font-family: 'Cairo', sans-serif;-->
+<!--            font-weight: 700;-->
+<!--            font-size: 11px;-->
+<!--            transition: var(&#45;&#45;transition);-->
+<!--            min-width: 70px;-->
+<!--            display: inline-flex;-->
+<!--            align-items: center;-->
+<!--            justify-content: center;-->
+<!--            gap: 4px;-->
+<!--        }-->
+
+<!--        .inner-tabs .tab-btn:hover {-->
+<!--            color: var(&#45;&#45;text-main);-->
+<!--            background: rgba(255,255,255,0.05);-->
+<!--        }-->
+
+<!--        .inner-tabs .tab-btn.active {-->
+<!--            background: var(&#45;&#45;bg-card);-->
+<!--            color: var(&#45;&#45;text-main);-->
+<!--            border: 1px solid var(&#45;&#45;border-glow);-->
+<!--            box-shadow: 0 2px 8px rgba(0,0,0,0.1);-->
+<!--        }-->
+
+<!--        .tab-panel { display: none; }-->
+<!--        .tab-panel.active { display: block; animation: fadeIn 0.3s ease; }-->
+
+<!--        @keyframes fadeIn {-->
+<!--            from { opacity: 0; transform: translateY(-5px); }-->
+<!--            to { opacity: 1; transform: translateY(0); }-->
+<!--        }-->
+
+<!--        .table-wrap {-->
+<!--            overflow-x: auto;-->
+<!--            border-radius: 10px;-->
+<!--            border: 1px solid var(&#45;&#45;border-glow);-->
+<!--        }-->
+
+<!--        .table-toolbar {-->
+<!--            display: flex;-->
+<!--            justify-content: space-between;-->
+<!--            align-items: center;-->
+<!--            flex-wrap: wrap;-->
+<!--            gap: 8px;-->
+<!--            padding: 10px 12px;-->
+<!--            border-bottom: 1px solid var(&#45;&#45;border-glow);-->
+<!--            background: var(&#45;&#45;bg-deep);-->
+<!--            border-radius: 10px 10px 0 0;-->
+<!--        }-->
+
+<!--        .table-toolbar .search-box {-->
+<!--            display: flex;-->
+<!--            align-items: center;-->
+<!--            gap: 6px;-->
+<!--        }-->
+
+<!--        .table-toolbar .search-box input {-->
+<!--            background: var(&#45;&#45;bg-input);-->
+<!--            border: 1px solid var(&#45;&#45;border-glow);-->
+<!--            border-radius: 6px;-->
+<!--            padding: 5px 10px;-->
+<!--            color: var(&#45;&#45;text-main);-->
+<!--            font-family: 'Cairo', sans-serif;-->
+<!--            font-size: 11px;-->
+<!--            outline: none;-->
+<!--            width: 180px;-->
+<!--            transition: var(&#45;&#45;transition);-->
+<!--        }-->
+
+<!--        .table-toolbar .search-box input:focus {-->
+<!--            border-color: var(&#45;&#45;neon-cyan);-->
+<!--            box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);-->
+<!--        }-->
+
+<!--        .table-toolbar .search-box input::placeholder {-->
+<!--            color: var(&#45;&#45;text-muted);-->
+<!--            opacity: 0.6;-->
+<!--        }-->
+
+<!--        .btn-export {-->
+<!--            background: var(&#45;&#45;neon-green);-->
+<!--            color: white;-->
+<!--            border: none;-->
+<!--            padding: 5px 14px;-->
+<!--            border-radius: 6px;-->
+<!--            font-size: 11px;-->
+<!--            font-weight: 700;-->
+<!--            cursor: pointer;-->
+<!--            transition: var(&#45;&#45;transition);-->
+<!--            font-family: 'Cairo', sans-serif;-->
+<!--            display: inline-flex;-->
+<!--            align-items: center;-->
+<!--            gap: 4px;-->
+<!--        }-->
+
+<!--        .btn-export:hover {-->
+<!--            transform: translateY(-2px);-->
+<!--            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);-->
+<!--        }-->
+
+<!--        .btn-export-word {-->
+<!--            background: var(&#45;&#45;neon-cyan);-->
+<!--            color: white;-->
+<!--            border: none;-->
+<!--            padding: 5px 14px;-->
+<!--            border-radius: 6px;-->
+<!--            font-size: 11px;-->
+<!--            font-weight: 700;-->
+<!--            cursor: pointer;-->
+<!--            transition: var(&#45;&#45;transition);-->
+<!--            font-family: 'Cairo', sans-serif;-->
+<!--            display: inline-flex;-->
+<!--            align-items: center;-->
+<!--            gap: 4px;-->
+<!--        }-->
+
+<!--        .btn-export-word:hover {-->
+<!--            transform: translateY(-2px);-->
+<!--            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);-->
+<!--        }-->
+
+<!--        .export-actions {-->
+<!--            display: flex;-->
+<!--            gap: 4px;-->
+<!--            flex-wrap: wrap;-->
+<!--        }-->
+
+<!--        .data-table {-->
+<!--            width: 100%;-->
+<!--            border-collapse: collapse;-->
+<!--            text-align: right;-->
+<!--            font-size: 12px;-->
+<!--        }-->
+
+<!--        .data-table th {-->
+<!--            padding: 8px 10px;-->
+<!--            color: var(&#45;&#45;text-muted);-->
+<!--            font-size: 10px;-->
+<!--            border-bottom: 2px solid var(&#45;&#45;border-glow);-->
+<!--            font-weight: 700;-->
+<!--            text-transform: uppercase;-->
+<!--            letter-spacing: 0.3px;-->
+<!--            white-space: nowrap;-->
+<!--            background: var(&#45;&#45;bg-deep);-->
+<!--        }-->
+
+<!--        .data-table td {-->
+<!--            padding: 8px 10px;-->
+<!--            border-bottom: 1px solid var(&#45;&#45;border-glow);-->
+<!--        }-->
+
+<!--        .data-table tr:last-child td {-->
+<!--            border-bottom: none;-->
+<!--        }-->
+
+<!--        .data-table tr:hover td {-->
+<!--            background: rgba(99, 102, 241, 0.04);-->
+<!--        }-->
+
+<!--        .code-highlight {-->
+<!--            background: var(&#45;&#45;bg-input);-->
+<!--            padding: 2px 8px;-->
+<!--            border-radius: 5px;-->
+<!--            font-family: monospace;-->
+<!--            font-size: 11px;-->
+<!--            border: 1px solid var(&#45;&#45;border-glow);-->
+<!--            color: var(&#45;&#45;neon-cyan);-->
+<!--        }-->
+
+<!--        .type-badge {-->
+<!--            padding: 2px 8px;-->
+<!--            border-radius: 5px;-->
+<!--            font-size: 9px;-->
+<!--            font-weight: 700;-->
+<!--            display: inline-block;-->
+<!--        }-->
+<!--        .badge-active { background: rgba(16, 185, 129, 0.15); color: var(&#45;&#45;neon-green); }-->
+<!--        .badge-inactive { background: rgba(244, 63, 94, 0.15); color: var(&#45;&#45;neon-red); }-->
+<!--        .badge-draft { background: rgba(251, 191, 36, 0.15); color: var(&#45;&#45;neon-yellow); }-->
+<!--        .badge-posted { background: rgba(16, 185, 129, 0.15); color: var(&#45;&#45;neon-green); }-->
+
+<!--        .stock-high { background: rgba(16, 185, 129, 0.15); color: var(&#45;&#45;neon-green); }-->
+<!--        .stock-medium { background: rgba(251, 191, 36, 0.15); color: var(&#45;&#45;neon-yellow); }-->
+<!--        .stock-low { background: rgba(244, 63, 94, 0.15); color: var(&#45;&#45;neon-red); }-->
+
+<!--        .btn-sm {-->
+<!--            padding: 4px 12px;-->
+<!--            border-radius: 6px;-->
+<!--            border: none;-->
+<!--            font-weight: 700;-->
+<!--            font-size: 10px;-->
+<!--            cursor: pointer;-->
+<!--            transition: var(&#45;&#45;transition);-->
+<!--            font-family: 'Cairo', sans-serif;-->
+<!--            display: inline-flex;-->
+<!--            align-items: center;-->
+<!--            gap: 4px;-->
+<!--        }-->
+<!--        .btn-sm:hover { transform: translateY(-2px); opacity: 0.9; }-->
+
+<!--        .btn-primary-sm { background: var(&#45;&#45;neon-cyan); color: white; }-->
+<!--        .btn-success-sm { background: var(&#45;&#45;neon-green); color: white; }-->
+<!--        .btn-purple-sm { background: var(&#45;&#45;neon-purple); color: white; }-->
+<!--        .btn-danger-sm { background: var(&#45;&#45;neon-red); color: white; }-->
+<!--        .btn-warning-sm { background: var(&#45;&#45;neon-yellow); color: #1e293b; }-->
+
+<!--        .flex-between {-->
+<!--            display: flex;-->
+<!--            justify-content: space-between;-->
+<!--            align-items: center;-->
+<!--            flex-wrap: wrap;-->
+<!--            gap: 6px;-->
+<!--            margin-bottom: 10px;-->
+<!--        }-->
+
+<!--        .modal-overlay {-->
+<!--            position: fixed;-->
+<!--            top: 0; left: 0; width: 100%; height: 100%;-->
+<!--            background: rgba(0,0,0,0.7);-->
+<!--            backdrop-filter: blur(8px);-->
+<!--            z-index: 1000;-->
+<!--            display: none;-->
+<!--            align-items: center;-->
+<!--            justify-content: center;-->
+<!--        }-->
+<!--        .modal-overlay.show { display: flex; }-->
+
+<!--        .modal-box {-->
+<!--            background: var(&#45;&#45;bg-card);-->
+<!--            border: 1px solid var(&#45;&#45;border-glow);-->
+<!--            border-radius: var(&#45;&#45;radius);-->
+<!--            padding: 20px;-->
+<!--            max-width: 850px;-->
+<!--            width: 95%;-->
+<!--            max-height: 90vh;-->
+<!--            overflow-y: auto;-->
+<!--            animation: fadeInUp 0.4s ease;-->
+<!--            box-shadow: var(&#45;&#45;shadow-glow);-->
+<!--        }-->
+
+<!--        .modal-box .modal-header {-->
+<!--            display: flex;-->
+<!--            justify-content: space-between;-->
+<!--            align-items: center;-->
+<!--            margin-bottom: 14px;-->
+<!--            padding-bottom: 10px;-->
+<!--            border-bottom: 1px solid var(&#45;&#45;border-glow);-->
+<!--        }-->
+
+<!--        .modal-box .modal-header h3 {-->
+<!--            margin: 0;-->
+<!--            font-size: 16px;-->
+<!--            font-weight: 900;-->
+<!--            background: var(&#45;&#45;primary-gradient);-->
+<!--            -webkit-background-clip: text;-->
+<!--            -webkit-text-fill-color: transparent;-->
+<!--        }-->
+
+<!--        .modal-box .modal-close {-->
+<!--            background: transparent;-->
+<!--            border: none;-->
+<!--            color: var(&#45;&#45;text-muted);-->
+<!--            font-size: 20px;-->
+<!--            cursor: pointer;-->
+<!--            transition: var(&#45;&#45;transition);-->
+<!--        }-->
+<!--        .modal-box .modal-close:hover {-->
+<!--            color: var(&#45;&#45;neon-red);-->
+<!--            transform: rotate(90deg);-->
+<!--        }-->
+
+<!--        .modal-box .modal-footer {-->
+<!--            display: flex;-->
+<!--            gap: 8px;-->
+<!--            justify-content: flex-end;-->
+<!--            margin-top: 14px;-->
+<!--            padding-top: 10px;-->
+<!--            border-top: 1px solid var(&#45;&#45;border-glow);-->
+<!--            flex-wrap: wrap;-->
+<!--        }-->
+
+<!--        .alert-toast {-->
+<!--            position: fixed;-->
+<!--            top: 16px;-->
+<!--            left: 50%;-->
+<!--            transform: translateX(-50%);-->
+<!--            padding: 10px 20px;-->
+<!--            border-radius: 10px;-->
+<!--            font-size: 12px;-->
+<!--            font-weight: 700;-->
+<!--            display: none;-->
+<!--            z-index: 2000;-->
+<!--            animation: slideDown 0.4s ease;-->
+<!--            box-shadow: 0 8px 30px rgba(0,0,0,0.3);-->
+<!--        }-->
+
+<!--        .alert-success {-->
+<!--            background: rgba(16, 185, 129, 0.15);-->
+<!--            border: 1px solid var(&#45;&#45;neon-green);-->
+<!--            color: var(&#45;&#45;neon-green);-->
+<!--        }-->
+<!--        .alert-error {-->
+<!--            background: rgba(244, 63, 94, 0.15);-->
+<!--            border: 1px solid var(&#45;&#45;neon-red);-->
+<!--            color: var(&#45;&#45;neon-red);-->
+<!--        }-->
+<!--        .alert-info {-->
+<!--            background: rgba(6, 182, 212, 0.15);-->
+<!--            border: 1px solid var(&#45;&#45;neon-cyan);-->
+<!--            color: var(&#45;&#45;neon-cyan);-->
+<!--        }-->
+
+<!--        .input-group {-->
+<!--            margin-bottom: 10px;-->
+<!--        }-->
+<!--        .input-group label {-->
+<!--            display: block;-->
+<!--            font-size: 10px;-->
+<!--            font-weight: 700;-->
+<!--            color: var(&#45;&#45;text-muted);-->
+<!--            margin-bottom: 4px;-->
+<!--        }-->
+<!--        .input-group label .required {-->
+<!--            color: var(&#45;&#45;neon-red);-->
+<!--            margin-right: 2px;-->
+<!--        }-->
+
+<!--        .modern-input, .modern-select {-->
+<!--            width: 100%;-->
+<!--            background: var(&#45;&#45;bg-input);-->
+<!--            border: 1px solid var(&#45;&#45;border-glow);-->
+<!--            border-radius: 8px;-->
+<!--            padding: 8px 12px;-->
+<!--            color: var(&#45;&#45;text-main);-->
+<!--            font-family: 'Cairo', sans-serif;-->
+<!--            font-size: 12px;-->
+<!--            outline: none;-->
+<!--            transition: var(&#45;&#45;transition);-->
+<!--        }-->
+<!--        .modern-input:focus, .modern-select:focus {-->
+<!--            border-color: #6366f1;-->
+<!--            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);-->
+<!--        }-->
+<!--        .modern-input::placeholder {-->
+<!--            color: var(&#45;&#45;text-muted);-->
+<!--            opacity: 0.6;-->
+<!--        }-->
+<!--        .modern-input:disabled {-->
+<!--            opacity: 0.6;-->
+<!--            cursor: not-allowed;-->
+<!--        }-->
+
+<!--        .form-row {-->
+<!--            display: grid;-->
+<!--            grid-template-columns: 1fr 1fr;-->
+<!--            gap: 10px;-->
+<!--        }-->
+
+<!--        .auto-code-badge {-->
+<!--            background: rgba(6, 182, 212, 0.1);-->
+<!--            border: 1px solid var(&#45;&#45;neon-cyan);-->
+<!--            border-radius: 6px;-->
+<!--            padding: 4px 10px;-->
+<!--            font-size: 10px;-->
+<!--            color: var(&#45;&#45;neon-cyan);-->
+<!--            display: inline-flex;-->
+<!--            align-items: center;-->
+<!--            gap: 4px;-->
+<!--        }-->
+
+<!--        @media (max-width: 576px) {-->
+<!--            .form-row { grid-template-columns: 1fr; }-->
+<!--        }-->
+
+<!--        .text-muted { color: var(&#45;&#45;text-muted); }-->
+<!--        .text-center { text-align: center; }-->
+<!--        .mb-1 { margin-bottom: 4px; }-->
+<!--        .mt-1 { margin-top: 4px; }-->
+<!--        .gap-1 { gap: 4px; }-->
+
+<!--        /* ===== أزرار الانتقال ===== */-->
+<!--        .nav-buttons-container {-->
+<!--            display: none;-->
+<!--            margin-top: 10px;-->
+<!--            padding: 12px 16px;-->
+<!--            background: var(&#45;&#45;bg-input);-->
+<!--            border: 1px solid var(&#45;&#45;border-glow);-->
+<!--            border-radius: var(&#45;&#45;radius);-->
+<!--            gap: 10px;-->
+<!--            flex-wrap: wrap;-->
+<!--            animation: fadeInUp 0.4s ease;-->
+<!--        }-->
+
+<!--        .nav-buttons-container.show {-->
+<!--            display: flex;-->
+<!--        }-->
+
+<!--        /* ===== تحسينات إضافية ===== */-->
+<!--        .glow-text {-->
+<!--            text-shadow: 0 0 20px rgba(99, 102, 241, 0.3);-->
+<!--        }-->
+
+<!--        .hover-scale {-->
+<!--            transition: var(&#45;&#45;transition);-->
+<!--        }-->
+<!--        .hover-scale:hover {-->
+<!--            transform: scale(1.02);-->
+<!--        }-->
+
+<!--        .badge-counter {-->
+<!--            display: inline-flex;-->
+<!--            align-items: center;-->
+<!--            justify-content: center;-->
+<!--            min-width: 20px;-->
+<!--            height: 20px;-->
+<!--            padding: 0 6px;-->
+<!--            border-radius: 20px;-->
+<!--            font-size: 10px;-->
+<!--            font-weight: 700;-->
+<!--            background: var(&#45;&#45;primary-gradient);-->
+<!--            color: white;-->
+<!--        }-->
+
+<!--        .empty-state {-->
+<!--            text-align: center;-->
+<!--            padding: 30px 20px;-->
+<!--            color: var(&#45;&#45;text-muted);-->
+<!--        }-->
+<!--        .empty-state i {-->
+<!--            font-size: 40px;-->
+<!--            opacity: 0.3;-->
+<!--            margin-bottom: 10px;-->
+<!--        }-->
+<!--        .empty-state p {-->
+<!--            font-size: 13px;-->
+<!--        }-->
+
+<!--        @media (max-width: 992px) {-->
+<!--            .app-container { flex-direction: column; height: auto; }-->
+<!--            .sidebar {-->
+<!--                width: 100%;-->
+<!--                min-width: unset;-->
+<!--                flex-direction: row;-->
+<!--                flex-wrap: wrap;-->
+<!--                padding: 10px 14px;-->
+<!--                gap: 8px;-->
+<!--            }-->
+<!--            .sidebar-logo { border-bottom: none; padding-bottom: 0; }-->
+<!--            .sidebar-logo::after { display: none; }-->
+<!--            .sidebar-nav { flex-direction: row; flex-wrap: wrap; flex: none; }-->
+<!--            .sidebar-nav .nav-item { padding: 6px 10px; font-size: 11px; width: auto; }-->
+<!--            .sidebar-footer { border-top: none; padding-top: 0; flex-direction: row; flex-wrap: wrap; }-->
+<!--            .sidebar-footer .logout-btn { width: auto; padding: 5px 12px; }-->
+<!--            .main-content { min-height: 400px; }-->
+<!--            .stats-grid { grid-template-columns: repeat(2, 1fr); }-->
+<!--            .modal-box { max-width: 95%; }-->
+<!--            .table-toolbar .search-box input { width: 120px; }-->
+<!--            .export-actions { flex-direction: row; }-->
+<!--        }-->
+
+<!--        @media (max-width: 576px) {-->
+<!--            body { padding: 6px; }-->
+<!--            .stats-grid { grid-template-columns: 1fr; }-->
+<!--            .sidebar-nav .nav-item { font-size: 10px; padding: 5px 8px; }-->
+<!--            .inner-tabs .tab-btn {-->
+<!--                font-size: 10px;-->
+<!--                padding: 6px 8px;-->
+<!--                min-width: 50px;-->
+<!--            }-->
+<!--            .table-toolbar { flex-direction: column; align-items: stretch; }-->
+<!--            .table-toolbar .search-box input { width: 100%; }-->
+<!--            .export-actions { flex-direction: column; align-items: stretch; }-->
+<!--        }-->
+
+<!--                .modal-box .modal-footer {-->
+<!--            display: flex;-->
+<!--            gap: 8px;-->
+<!--            justify-content: flex-end;-->
+<!--            margin-top: 14px;-->
+<!--            padding-top: 10px;-->
+<!--            border-top: 1px solid var(&#45;&#45;border-glow);-->
+<!--            flex-wrap: wrap;-->
+<!--        }-->
+
+<!--         .btn-outline-cyan-sm {-->
+<!--            padding: 4px 12px;-->
+<!--            border-radius: 6px;-->
+<!--            border: 1px solid var(&#45;&#45;neon-cyan);-->
+<!--            background: transparent;-->
+<!--            color: var(&#45;&#45;neon-cyan);-->
+<!--            font-weight: 700;-->
+<!--            font-size: 10px;-->
+<!--            cursor: pointer;-->
+<!--            transition: var(&#45;&#45;transition);-->
+<!--            font-family: 'Cairo', sans-serif;-->
+<!--            display: inline-flex;-->
+<!--            align-items: center;-->
+<!--            gap: 4px;-->
+<!--        }-->
+<!--        .btn-outline-cyan-sm:hover {-->
+<!--            background: var(&#45;&#45;neon-cyan);-->
+<!--            color: var(&#45;&#45;bg-deep);-->
+<!--        }-->
+<!--    </style>-->
+<!--</head>-->
+<!--<body>-->
+
+<!--&lt;!&ndash; ===== جزيئات الخلفية ===== &ndash;&gt;-->
+<!--<div id="particles" class="particles"></div>-->
+
+<!--&lt;!&ndash; ===== التنبيهات ===== &ndash;&gt;-->
+<!--<div id="statusToast" class="alert-toast"></div>-->
+
+<!--<div class="app-container">-->
+
+<!--    &lt;!&ndash; ===== الشريط الجانبي ===== &ndash;&gt;-->
+<!--    <aside class="sidebar">-->
+<!--        <div class="sidebar-logo">-->
+<!--            <h2><i class="fas fa-hospital"></i> نظام فواتير المحاسبي</h2>-->
+<!--            <p>إدارة المخزون و الاصناف والعملاء والموردين</p>-->
+<!--            <p class="developer-name">م. اصيل فتاحي</p>-->
+<!--        </div>-->
+
+<!--        <nav class="sidebar-nav">-->
+<!--            <button class="nav-item active" onclick="navigateTo('items')">-->
+<!--                <i class="fas fa-cubes"></i> المخزون-->
+<!--                <span class="badge-count" id="sideItemCount">0</span>-->
+<!--            </button>-->
+<!--            <button class="nav-item" onclick="navigateTo('addItem')">-->
+<!--                <i class="fas fa-plus-circle"></i> إضافة صنف-->
+<!--            </button>-->
+<!--            <button class="nav-item" onclick="navigateTo('suppliers')">-->
+<!--                <i class="fas fa-truck"></i> الموردين-->
+<!--                <span class="badge-count" id="sideSupplierCount">0</span>-->
+<!--            </button>-->
+<!--            <button class="nav-item" onclick="navigateTo('addSupplier')">-->
+<!--                <i class="fas fa-user-plus"></i> إضافة مورد-->
+<!--            </button>-->
+<!--            <button class="nav-item" onclick="navigateTo('customers')">-->
+<!--                <i class="fas fa-users"></i> العملاء-->
+<!--                <span class="badge-count" id="sideCustomerCount">0</span>-->
+<!--            </button>-->
+<!--            <button class="nav-item" onclick="navigateTo('addCustomer')">-->
+<!--                <i class="fas fa-user-plus"></i> إضافة عميل-->
+<!--            </button>-->
+<!--        </nav>-->
+
+<!--        <div class="sidebar-footer">-->
+<!--            <div class="theme-toggle-btn" id="themeToggle">-->
+<!--                <span class="theme-option active" data-theme="dark"><i class="fas fa-moon"></i> داكن</span>-->
+<!--                <span class="theme-option" data-theme="light"><i class="fas fa-sun"></i> فاتح</span>-->
+<!--            </div>-->
+<!--            <button class="logout-btn" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</button>-->
+<!--        </div>-->
+<!--    </aside>-->
+
+<!--    &lt;!&ndash; ===== المحتوى الرئيسي ===== &ndash;&gt;-->
+<!--    <main class="main-content">-->
+
+<!--        &lt;!&ndash; شريط الشركة مع أزرار الانتقال &ndash;&gt;-->
+<!--        <div class="company-bar">-->
+<!--            <div class="company-info">-->
+<!--                <h1><i class="fas fa-cubes"></i> إدارة المخزون والإعدادات</h1>-->
+<!--                <span class="badge-code" id="lblCompanyCode">COMP&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;</span>-->
+<!--                <span class="badge-code id-badge" id="lblCompanyName">-&#45;&#45;</span>-->
+<!--            </div>-->
+<!--            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">-->
+<!--                <a id="btnGoToAccounting" href="#" class="btn-go-to-accounting">-->
+<!--                    <i class="fas fa-arrow-right"></i>  العودة الي القيود والتقارير-->
+<!--                    <span style="font-size:9px;background:rgba(255,255,255,0.2);padding:0 8px;border-radius:10px;"></span>-->
+<!--                </a>-->
+<!--                <a id="btnGoToTransactions" href="#" class="btn-go-to-transactions" style="display:none;">-->
+<!--                    <i class="fas fa-arrow-left"></i> فواتير الشراء والمبيعات-->
+<!--                    <span style="font-size:9px;background:rgba(255,255,255,0.2);padding:0 8px;border-radius:10px;"></span>-->
+<!--                </a>-->
+<!--&lt;!&ndash;                <button class="btn-primary-sm" onclick="refreshAllData()"><i class="fas fa-sync"></i> تحديث</button>&ndash;&gt;-->
+<!--            </div>-->
+<!--        </div>-->
+
+<!--        &lt;!&ndash; البطاقات الإحصائية &ndash;&gt;-->
+<!--        <div class="stats-grid">-->
+<!--            <div class="stat-card">-->
+<!--                <i class="fas fa-cubes stat-icon"></i>-->
+<!--                <div class="label">إجمالي الأصناف</div>-->
+<!--                <div class="value text-cyan" id="lblTotalItems">0</div>-->
+<!--                <div class="sub">في المخزون</div>-->
+<!--            </div>-->
+<!--            <div class="stat-card">-->
+<!--                <i class="fas fa-boxes stat-icon"></i>-->
+<!--                <div class="label">إجمالي الكمية</div>-->
+<!--                <div class="value text-green" id="lblTotalStock">0</div>-->
+<!--                <div class="sub">وحدة</div>-->
+<!--            </div>-->
+<!--            <div class="stat-card">-->
+<!--                <i class="fas fa-coins stat-icon"></i>-->
+<!--                <div class="label">قيمة المخزون</div>-->
+<!--                <div class="value text-purple" id="lblTotalValue">0.00</div>-->
+<!--                <div class="sub">بسعر الشراء</div>-->
+<!--            </div>-->
+<!--            <div class="stat-card">-->
+<!--                <i class="fas fa-tags stat-icon"></i>-->
+<!--                <div class="label">قيمة المبيعات</div>-->
+<!--                <div class="value text-yellow" id="lblTotalSalesValue">0.00</div>-->
+<!--                <div class="sub">بسعر البيع</div>-->
+<!--            </div>-->
+<!--        </div>-->
+
+<!--        &lt;!&ndash; منطقة المحتوى &ndash;&gt;-->
+<!--        <div class="content-area">-->
+
+<!--            &lt;!&ndash; التبويبات الداخلية &ndash;&gt;-->
+<!--            <div class="inner-tabs">-->
+<!--                <button class="tab-btn active" onclick="switchTab(event, 'panelItems')"><i class="fas fa-cubes"></i> المخزون</button>-->
+<!--                <button class="tab-btn" onclick="switchTab(event, 'panelAddItem')"><i class="fas fa-plus-circle"></i> إضافة صنف</button>-->
+<!--                <button class="tab-btn" onclick="switchTab(event, 'panelSuppliers')"><i class="fas fa-truck"></i> الموردين</button>-->
+<!--                <button class="tab-btn" onclick="switchTab(event, 'panelAddSupplier')"><i class="fas fa-user-plus"></i> إضافة مورد</button>-->
+<!--                <button class="tab-btn" onclick="switchTab(event, 'panelCustomers')"><i class="fas fa-users"></i> العملاء</button>-->
+<!--                <button class="tab-btn" onclick="switchTab(event, 'panelAddCustomer')"><i class="fas fa-user-plus"></i> إضافة عميل</button>-->
+<!--            </div>-->
+
+<!--            &lt;!&ndash; ===== تبويب المخزون ===== &ndash;&gt;-->
+<!--            <div id="panelItems" class="tab-panel active">-->
+<!--                <div class="flex-between">-->
+<!--                    <h4 style="margin: 0; font-size: 13px; font-weight: 700;"><i class="fas fa-cubes"></i> أصناف المخزون الحالية</h4>-->
+<!--                </div>-->
+<!--                <div class="table-wrap">-->
+<!--                    <div class="table-toolbar">-->
+<!--                        <div class="search-box">-->
+<!--                            <i class="fas fa-search" style="color:var(&#45;&#45;text-muted);font-size:12px;"></i>-->
+<!--                            <input type="text" id="itemsSearch" placeholder="🔍 بحث باسم أو كود الصنف..." onkeyup="filterTable('itemsSearch', 'itemsTableBody')">-->
+<!--                        </div>-->
+<!--                        <div class="export-actions">-->
+<!--                            <button class="btn-export" onclick="exportTableToExcel('itemsTable', 'الأصناف')">-->
+<!--                                <i class="fas fa-file-excel"></i> Excel-->
+<!--                            </button>-->
+<!--                            <button class="btn-export-word" onclick="exportTableToWord('itemsTable', 'الأصناف')">-->
+<!--                                <i class="fas fa-file-word"></i> Word-->
+<!--                            </button>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                    <table class="data-table" id="itemsTable">-->
+<!--                        <thead>-->
+<!--                        <tr>-->
+<!--                            <th>كود الصنف</th>-->
+<!--                            <th>الاسم (عربي)</th>-->
+<!--                            <th>الوحدة</th>-->
+<!--                            <th>سعر الشراء</th>-->
+<!--                            <th>سعر البيع</th>-->
+<!--                            <th>الكمية الحالية</th>-->
+<!--                            <th>الحالة</th>-->
+<!--                        </tr>-->
+<!--                        </thead>-->
+<!--                        <tbody id="itemsTableBody">-->
+<!--                        <tr><td colspan="7" class="text-center text-muted" style="padding: 20px;"><i class="fas fa-spinner fa-pulse"></i> جاري التحميل...</td></tr>-->
+<!--                        </tbody>-->
+<!--                    </table>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            &lt;!&ndash; ===== تبويب إضافة صنف ===== &ndash;&gt;-->
+<!--            <div id="panelAddItem" class="tab-panel">-->
+<!--                <div class="flex-between">-->
+<!--                    <h4 style="margin: 0; font-size: 13px; font-weight: 700;"><i class="fas fa-plus-circle"></i> إضافة صنف جديد</h4>-->
+<!--                </div>-->
+<!--                <form id="addItemForm" onsubmit="submitNewItem(event)">-->
+<!--                    <div class="form-row">-->
+<!--                        <div class="input-group">-->
+<!--                            <label><i class="fas fa-tag"></i> كود الصنف <span class="required">*</span></label>-->
+<!--                            <input type="text" id="newItemCode" class="modern-input" placeholder="مثال: ITM-2007" required>-->
+<!--                        </div>-->
+<!--                        <div class="input-group">-->
+<!--                            <label><i class="fas fa-ruler"></i> الوحدة <span class="required">*</span></label>-->
+<!--                            <input type="text" id="newItemUnit" class="modern-input" placeholder="مثال: جمله / حبة" required>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                    <div class="form-row">-->
+<!--                        <div class="input-group">-->
+<!--                            <label><i class="fas fa-font"></i> الاسم (عربي) <span class="required">*</span></label>-->
+<!--                            <input type="text" id="newItemNameAr" class="modern-input" placeholder="اسم الصنف بالعربي" required>-->
+<!--                        </div>-->
+<!--                        <div class="input-group">-->
+<!--                            <label><i class="fas fa-font"></i> الاسم (إنجليزي)</label>-->
+<!--                            <input type="text" id="newItemNameEn" class="modern-input" placeholder="Item Name English">-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                    <div class="form-row">-->
+<!--                        <div class="input-group">-->
+<!--                            <label><i class="fas fa-money-bill"></i> سعر الشراء <span class="required">*</span></label>-->
+<!--                            <input type="number" step="any" id="newItemPurchasePrice" class="modern-input" value="0.0" required>-->
+<!--                        </div>-->
+<!--                        <div class="input-group">-->
+<!--                            <label><i class="fas fa-tag"></i> سعر البيع <span class="required">*</span></label>-->
+<!--                            <input type="number" step="any" id="newItemSalePrice" class="modern-input" value="0.0" required>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                    <div class="input-group">-->
+<!--                        <label><i class="fas fa-boxes"></i> الكمية الأولية <span class="required">*</span></label>-->
+<!--                        <input type="number" step="any" id="newItemCurrentStock" class="modern-input" value="0.0" required>-->
+<!--                    </div>-->
+<!--                    <button type="submit" class="btn-success-sm" style="width:100%;padding:10px;font-size:13px;"><i class="fas fa-save"></i> حفظ الصنف الجديد</button>-->
+<!--                </form>-->
+<!--                <div id="addItemResult" class="mt-1"></div>-->
+<!--            </div>-->
+
+<!--            &lt;!&ndash; ===== تبويب عرض الموردين ===== &ndash;&gt;-->
+<!--            <div id="panelSuppliers" class="tab-panel">-->
+<!--                <div class="flex-between">-->
+<!--                    <h4 style="margin: 0; font-size: 13px; font-weight: 700;"><i class="fas fa-truck"></i> قائمة الموردين</h4>-->
+<!--                </div>-->
+<!--                <div class="table-wrap">-->
+<!--                    <div class="table-toolbar">-->
+<!--                        <div class="search-box">-->
+<!--                            <i class="fas fa-search" style="color:var(&#45;&#45;text-muted);font-size:12px;"></i>-->
+<!--                            <input type="text" id="suppliersSearch" placeholder="🔍 بحث باسم أو كود المورد..." onkeyup="filterTable('suppliersSearch', 'suppliersTableBody')">-->
+<!--                        </div>-->
+<!--                        <div class="export-actions">-->
+<!--                            <button class="btn-export" onclick="exportTableToExcel('suppliersTable', 'الموردين')">-->
+<!--                                <i class="fas fa-file-excel"></i> Excel-->
+<!--                            </button>-->
+<!--                            <button class="btn-export-word" onclick="exportTableToWord('suppliersTable', 'الموردين')">-->
+<!--                                <i class="fas fa-file-word"></i> Word-->
+<!--                            </button>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                    <table class="data-table" id="suppliersTable">-->
+<!--                        <thead>-->
+<!--                        <tr>-->
+<!--                            <th>ID</th>-->
+<!--                            <th>كود المورد</th>-->
+<!--                            <th>الاسم</th>-->
+<!--                            <th>الهاتف</th>-->
+<!--                            <th>العنوان</th>-->
+<!--                            <th>الإجراءات</th>-->
+<!--                        </tr>-->
+<!--                        </thead>-->
+<!--                        <tbody id="suppliersTableBody">-->
+<!--                        <tr><td colspan="6" class="text-center text-muted" style="padding: 20px;"><i class="fas fa-spinner fa-pulse"></i> جاري التحميل...</td></tr>-->
+<!--                        </tbody>-->
+<!--                    </table>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            &lt;!&ndash; ===== تبويب إضافة مورد ===== &ndash;&gt;-->
+<!--            <div id="panelAddSupplier" class="tab-panel">-->
+<!--                <div class="flex-between">-->
+<!--                    <h4 style="margin: 0; font-size: 13px; font-weight: 700;"><i class="fas fa-user-plus"></i> إضافة مورد جديد</h4>-->
+<!--                    <span id="autoSupplierCodeBadge" class="auto-code-badge"><i class="fas fa-magic"></i> الكود سيتوليد تلقائياً</span>-->
+<!--                </div>-->
+<!--                <form id="addSupplierForm" onsubmit="submitNewSupplier(event)">-->
+<!--                    <div class="form-row">-->
+<!--                        <div class="input-group">-->
+<!--                            <label><i class="fas fa-tag"></i> كود المورد</label>-->
+<!--                            <input type="text" id="newSupplierCode" class="modern-input" placeholder="سيتوليد تلقائياً" readonly disabled style="background:var(&#45;&#45;bg-input);opacity:0.7;">-->
+<!--                            <small style="color:var(&#45;&#45;text-muted);font-size:9px;">سيتم توليد الكود تلقائياً عند الحفظ</small>-->
+<!--                        </div>-->
+<!--                        <div class="input-group">-->
+<!--                            <label><i class="fas fa-building"></i> اسم المورد <span class="required">*</span></label>-->
+<!--                            <input type="text" id="newSupplierName" class="modern-input" placeholder="اسم الشركة أو المورد" required>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                    <div class="form-row">-->
+<!--                        <div class="input-group">-->
+<!--                            <label><i class="fas fa-phone"></i> رقم الهاتف</label>-->
+<!--                            <input type="text" id="newSupplierPhone" class="modern-input" placeholder="77xxxxxxx">-->
+<!--                        </div>-->
+<!--                        <div class="input-group">-->
+<!--                            <label><i class="fas fa-map-marker-alt"></i> العنوان</label>-->
+<!--                            <input type="text" id="newSupplierAddress" class="modern-input" placeholder="المدينة - الشارع">-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                    <div class="input-group">-->
+<!--                        <label><i class="fas fa-sticky-note"></i> ملاحظات</label>-->
+<!--                        <input type="text" id="newSupplierNotes" class="modern-input" placeholder="ملاحظات حول المورد">-->
+<!--                    </div>-->
+<!--                    <button type="submit" class="btn-success-sm" style="width:100%;padding:10px;font-size:13px;"><i class="fas fa-save"></i> حفظ المورد الجديد</button>-->
+<!--                </form>-->
+<!--                <div id="addSupplierResult" class="mt-1"></div>-->
+<!--            </div>-->
+
+<!--            &lt;!&ndash; ===== تبويب عرض العملاء ===== &ndash;&gt;-->
+<!--            <div id="panelCustomers" class="tab-panel">-->
+<!--                <div class="flex-between">-->
+<!--                    <h4 style="margin: 0; font-size: 13px; font-weight: 700;"><i class="fas fa-users"></i> قائمة العملاء</h4>-->
+<!--                </div>-->
+<!--                <div class="table-wrap">-->
+<!--                    <div class="table-toolbar">-->
+<!--                        <div class="search-box">-->
+<!--                            <i class="fas fa-search" style="color:var(&#45;&#45;text-muted);font-size:12px;"></i>-->
+<!--                            <input type="text" id="customersSearch" placeholder="🔍 بحث باسم أو كود العميل..." onkeyup="filterTable('customersSearch', 'customersTableBody')">-->
+<!--                        </div>-->
+<!--                        <div class="export-actions">-->
+<!--                            <button class="btn-export" onclick="exportTableToExcel('customersTable', 'العملاء')">-->
+<!--                                <i class="fas fa-file-excel"></i> Excel-->
+<!--                            </button>-->
+<!--                            <button class="btn-export-word" onclick="exportTableToWord('customersTable', 'العملاء')">-->
+<!--                                <i class="fas fa-file-word"></i> Word-->
+<!--                            </button>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                    <table class="data-table" id="customersTable">-->
+<!--                        <thead>-->
+<!--                        <tr>-->
+<!--                            <th>ID</th>-->
+<!--                            <th>كود العميل</th>-->
+<!--                            <th>الاسم</th>-->
+<!--                            <th>الهاتف</th>-->
+<!--                            <th>العنوان</th>-->
+<!--                            <th>الإجراءات</th>-->
+<!--                        </tr>-->
+<!--                        </thead>-->
+<!--                        <tbody id="customersTableBody">-->
+<!--                        <tr><td colspan="6" class="text-center text-muted" style="padding: 20px;"><i class="fas fa-spinner fa-pulse"></i> جاري التحميل...</td></tr>-->
+<!--                        </tbody>-->
+<!--                    </table>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            &lt;!&ndash; ===== تبويب إضافة عميل ===== &ndash;&gt;-->
+<!--            <div id="panelAddCustomer" class="tab-panel">-->
+<!--                <div class="flex-between">-->
+<!--                    <h4 style="margin: 0; font-size: 13px; font-weight: 700;"><i class="fas fa-user-plus"></i> إضافة عميل جديد</h4>-->
+<!--                    <span id="autoCustomerCodeBadge" class="auto-code-badge"><i class="fas fa-magic"></i> الكود سيتوليد تلقائياً</span>-->
+<!--                </div>-->
+<!--                <form id="addCustomerForm" onsubmit="submitNewCustomer(event)">-->
+<!--                    <div class="form-row">-->
+<!--                        <div class="input-group">-->
+<!--                            <label><i class="fas fa-tag"></i> كود العميل</label>-->
+<!--                            <input type="text" id="newCustomerCode" class="modern-input" placeholder="سيتوليد تلقائياً" readonly disabled style="background:var(&#45;&#45;bg-input);opacity:0.7;">-->
+<!--                            <small style="color:var(&#45;&#45;text-muted);font-size:9px;">سيتم توليد الكود تلقائياً عند الحفظ</small>-->
+<!--                        </div>-->
+<!--                        <div class="input-group">-->
+<!--                            <label><i class="fas fa-user"></i> اسم العميل <span class="required">*</span></label>-->
+<!--                            <input type="text" id="newCustomerName" class="modern-input" placeholder="اسم العميل أو الجهة" required>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                    <div class="form-row">-->
+<!--                        <div class="input-group">-->
+<!--                            <label><i class="fas fa-phone"></i> رقم الهاتف</label>-->
+<!--                            <input type="text" id="newCustomerPhone" class="modern-input" placeholder="77xxxxxxx">-->
+<!--                        </div>-->
+<!--                        <div class="input-group">-->
+<!--                            <label><i class="fas fa-map-marker-alt"></i> العنوان</label>-->
+<!--                            <input type="text" id="newCustomerAddress" class="modern-input" placeholder="المنطقة">-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                    <div class="input-group">-->
+<!--                        <label><i class="fas fa-sticky-note"></i> ملاحظات</label>-->
+<!--                        <input type="text" id="newCustomerNotes" class="modern-input" placeholder="ملاحظات حول العميل">-->
+<!--                    </div>-->
+<!--                    <button type="submit" class="btn-warning-sm" style="width:100%;padding:10px;font-size:13px;"><i class="fas fa-save"></i> حفظ العميل الجديد</button>-->
+<!--                </form>-->
+<!--                <div id="addCustomerResult" class="mt-1"></div>-->
+<!--            </div>-->
+
+<!--        </div>-->
+<!--    </main>-->
+<!--</div>-->
+
+<!--<script>-->
+<!--    // ============================================================-->
+<!--    // 1. التكوينات الأساسية-->
+<!--    // ============================================================-->
+<!--    const API_BASE = 'http://localhost:8080/api';-->
+<!--    let companyCode = "COMP-917638C0";-->
+<!--    let companyName = "";-->
+<!--    let token = localStorage.getItem('jwtToken');-->
+
+<!--    // التحقق من التوكن-->
+<!--    if (!token) {-->
+<!--        alert('🔒 غير مصرح لك! يرجى تسجيل الدخول.');-->
+<!--        window.location.href = "login.html";-->
+<!--    }-->
+
+<!--    // ============================================================-->
+<!--    // 2. قراءة بيانات الشركة من الرابط-->
+<!--    // ============================================================-->
+<!--    function getCompanyFromURL() {-->
+<!--        const params = new URLSearchParams(window.location.search);-->
+<!--        const code = params.get('company');-->
+<!--        const name = params.get('name');-->
+
+<!--        if (code) {-->
+<!--            companyCode = code;-->
+<!--            companyName = decodeURIComponent(name || '');-->
+<!--            document.getElementById('lblCompanyCode').innerText = companyCode;-->
+<!--            document.getElementById('lblCompanyName').innerHTML = `🏢 ${companyName || companyCode}`;-->
+
+<!--            // حفظ في localStorage-->
+<!--            localStorage.setItem('currentCompanyCode', companyCode);-->
+<!--            localStorage.setItem('currentCompanyName', companyName);-->
+
+<!--            const btnTransactions = document.getElementById('btnGoToTransactions');-->
+<!--            btnTransactions.href = `inventory_transactions.html?company=${companyCode}&name=${encodeURIComponent(companyName)}`;-->
+<!--            btnTransactions.style.display = 'inline-flex';-->
+
+<!--            const btnAccounting = document.getElementById('btnGoToAccounting');-->
+<!--            btnAccounting.href = `financial_operations.html?company=${companyCode}`;-->
+<!--        } else {-->
+<!--            // محاولة القراءة من localStorage-->
+<!--            const savedCode = localStorage.getItem('currentCompanyCode');-->
+<!--            const savedName = localStorage.getItem('currentCompanyName');-->
+<!--            if (savedCode) {-->
+<!--                companyCode = savedCode;-->
+<!--                companyName = savedName || '';-->
+<!--                document.getElementById('lblCompanyCode').innerText = companyCode;-->
+<!--                document.getElementById('lblCompanyName').innerHTML = `🏢 ${companyName || companyCode}`;-->
+
+<!--                const btnTransactions = document.getElementById('btnGoToTransactions');-->
+<!--                btnTransactions.href = `inventory_transactions.html?company=${companyCode}&name=${encodeURIComponent(companyName)}`;-->
+<!--                btnTransactions.style.display = 'inline-flex';-->
+<!--            }-->
+<!--        }-->
+<!--    }-->
+
+<!--    // ============================================================-->
+<!--    // 3. الثيم-->
+<!--    // ============================================================-->
+<!--    function initTheme() {-->
+<!--        const saved = localStorage.getItem('theme') || 'dark';-->
+<!--        document.documentElement.setAttribute('data-theme', saved);-->
+<!--        updateThemeButtons(saved);-->
+<!--        createParticles();-->
+<!--    }-->
+
+<!--    function updateThemeButtons(theme) {-->
+<!--        document.querySelectorAll('.theme-option').forEach(b => {-->
+<!--            b.classList.toggle('active', b.getAttribute('data-theme') === theme);-->
+<!--        });-->
+<!--    }-->
+
+<!--    function setTheme(theme) {-->
+<!--        document.documentElement.setAttribute('data-theme', theme);-->
+<!--        localStorage.setItem('theme', theme);-->
+<!--        updateThemeButtons(theme);-->
+<!--        createParticles();-->
+<!--    }-->
+
+<!--    document.querySelectorAll('.theme-option').forEach(b => {-->
+<!--        b.addEventListener('click', (e) => {-->
+<!--            e.stopPropagation();-->
+<!--            setTheme(b.getAttribute('data-theme'));-->
+<!--        });-->
+<!--    });-->
+
+<!--    function createParticles() {-->
+<!--        const container = document.getElementById('particles');-->
+<!--        container.innerHTML = '';-->
+<!--        if (document.documentElement.getAttribute('data-theme') !== 'dark') return;-->
+<!--        for (let i = 0; i < 30; i++) {-->
+<!--            const p = document.createElement('div');-->
+<!--            p.classList.add('particle');-->
+<!--            const s = Math.random() * 4 + 2;-->
+<!--            p.style.cssText = `width:${s}px;height:${s}px;left:${Math.random()*100}%;animation-duration:${Math.random()*15+10}s;animation-delay:${Math.random()*15}s;`;-->
+<!--            container.appendChild(p);-->
+<!--        }-->
+<!--    }-->
+
+<!--    // ============================================================-->
+<!--    // 4. دوال مساعدة-->
+<!--    // ============================================================-->
+<!--    function showToast(msg, mode = 'success') {-->
+<!--        const t = document.getElementById('statusToast');-->
+<!--        t.innerHTML = `<i class="fas ${mode === 'success' ? 'fa-check-circle' : mode === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${msg}`;-->
+<!--        t.className = `alert-toast alert-${mode}`;-->
+<!--        t.style.display = 'block';-->
+<!--        clearTimeout(t._timeout);-->
+<!--        t._timeout = setTimeout(() => { t.style.display = 'none'; }, 3500);-->
+<!--    }-->
+
+<!--    function switchTab(event, tabId) {-->
+<!--        document.querySelectorAll('.inner-tabs .tab-btn').forEach(b => b.classList.remove('active'));-->
+<!--        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));-->
+<!--        event.currentTarget.classList.add('active');-->
+<!--        document.getElementById(tabId).classList.add('active');-->
+<!--    }-->
+
+<!--    function navigateTo(section) {-->
+<!--        const map = {-->
+<!--            items: 'panelItems',-->
+<!--            addItem: 'panelAddItem',-->
+<!--            suppliers: 'panelSuppliers',-->
+<!--            addSupplier: 'panelAddSupplier',-->
+<!--            customers: 'panelCustomers',-->
+<!--            addCustomer: 'panelAddCustomer'-->
+<!--        };-->
+<!--        const tabId = map[section];-->
+<!--        if (!tabId) return;-->
+
+<!--        const btn = document.querySelector(`.inner-tabs .tab-btn[onclick*="${tabId}"]`);-->
+<!--        if (btn) btn.click();-->
+
+<!--        document.querySelectorAll('.sidebar-nav .nav-item').forEach(b => b.classList.remove('active'));-->
+<!--        document.querySelectorAll('.sidebar-nav .nav-item').forEach(b => {-->
+<!--            const text = b.textContent.trim();-->
+<!--            const match = section === 'items' ? 'المخزون' :-->
+<!--                         section === 'addItem' ? 'إضافة صنف' :-->
+<!--                         section === 'suppliers' ? 'الموردين' :-->
+<!--                         section === 'addSupplier' ? 'إضافة مورد' :-->
+<!--                         section === 'customers' ? 'العملاء' :-->
+<!--                         section === 'addCustomer' ? 'إضافة عميل' : '';-->
+<!--            if (text.includes(match)) b.classList.add('active');-->
+<!--        });-->
+<!--    }-->
+
+<!--    function handleLogout() {-->
+<!--        if (confirm("تسجيل الخروج؟")) {-->
+<!--            localStorage.removeItem('jwtToken');-->
+<!--            localStorage.removeItem('loggedInUser');-->
+<!--            localStorage.removeItem('userRole');-->
+<!--            sessionStorage.clear();-->
+<!--            window.location.href = "login.html";-->
+<!--        }-->
+<!--    }-->
+
+<!--    function getHeaders() {-->
+<!--        const headers = { 'Content-Type': 'application/json' };-->
+<!--        if (token) {-->
+<!--            headers['Authorization'] = 'Bearer ' + token;-->
+<!--        }-->
+<!--        return headers;-->
+<!--    }-->
+
+<!--    // ============================================================-->
+<!--    // 5. البحث في الجداول-->
+<!--    // ============================================================-->
+<!--    function filterTable(inputId, tableBodyId) {-->
+<!--        const input = document.getElementById(inputId);-->
+<!--        if (!input) return;-->
+<!--        const filter = input.value.toLowerCase();-->
+<!--        const rows = document.getElementById(tableBodyId).getElementsByTagName('tr');-->
+<!--        for (let row of rows) {-->
+<!--            const cells = row.getElementsByTagName('td');-->
+<!--            if (cells.length === 0) continue;-->
+<!--            let found = false;-->
+<!--            for (let cell of cells) {-->
+<!--                if (cell.textContent.toLowerCase().includes(filter)) {-->
+<!--                    found = true;-->
+<!--                    break;-->
+<!--                }-->
+<!--            }-->
+<!--            row.style.display = found ? '' : 'none';-->
+<!--        }-->
+<!--    }-->
+
+<!--    // ============================================================-->
+<!--    // 6. تصدير الجدول إلى Excel (نفس الكود الأصلي)-->
+<!--    // ============================================================-->
+<!--    function exportTableToExcel(tableId, filename) {-->
+<!--        const table = document.getElementById(tableId);-->
+<!--        if (!table) {-->
+<!--            showToast('❌ الجدول غير موجود', 'error');-->
+<!--            return;-->
+<!--        }-->
+
+<!--        const clone = table.cloneNode(true);-->
+<!--        clone.querySelectorAll('td:last-child').forEach(cell => {-->
+<!--            cell.innerHTML = '';-->
+<!--        });-->
+<!--        clone.querySelectorAll('th:last-child').forEach(cell => {-->
+<!--            cell.innerHTML = '';-->
+<!--        });-->
+
+<!--        let html = `-->
+<!--            <html>-->
+<!--                <head>-->
+<!--                    <meta charset="UTF-8">-->
+<!--                    <style>-->
+<!--                        body { font-family: 'Cairo', Arial, sans-serif; direction: rtl; padding: 20px; }-->
+<!--                        table { border-collapse: collapse; width: 100%; }-->
+<!--                        th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }-->
+<!--                        th { background: #4f46e5; color: white; }-->
+<!--                        tr:nth-child(even) { background: #f2f2f2; }-->
+<!--                    </style>-->
+<!--                </head>-->
+<!--                <body>-->
+<!--                    <h2 style="text-align:center;">${filename} - ${companyName || companyCode}</h2>-->
+<!--                    <p style="text-align:center;color:#666;font-size:12px;">تاريخ التصدير: ${new Date().toLocaleDateString('ar-EG')}</p>-->
+<!--                    ${clone.outerHTML}-->
+<!--                    <p style="text-align:center;color:#999;font-size:10px;margin-top:20px;">تم التصدير من نظام فواتير المحاسبي - م. اصيل فتاحي</p>-->
+<!--                </body>-->
+<!--            </html>-->
+<!--        `;-->
+
+<!--        const blob = new Blob([html], { type: 'application/vnd.ms-excel' });-->
+<!--        const url = URL.createObjectURL(blob);-->
+<!--        const a = document.createElement('a');-->
+<!--        a.href = url;-->
+<!--        a.download = `${filename}_${companyCode}_${new Date().toISOString().split('T')[0]}.xls`;-->
+<!--        document.body.appendChild(a);-->
+<!--        a.click();-->
+<!--        document.body.removeChild(a);-->
+<!--        URL.revokeObjectURL(url);-->
+
+<!--        showToast(`✅ تم تصدير ${filename} إلى Excel`, 'success');-->
+<!--    }-->
+
+<!--    // ============================================================-->
+<!--    // 7. تصدير الجدول إلى Word (جديد)-->
+<!--    // ============================================================-->
+<!--    function exportTableToWord(tableId, filename) {-->
+<!--        const table = document.getElementById(tableId);-->
+<!--        if (!table) {-->
+<!--            showToast('❌ الجدول غير موجود', 'error');-->
+<!--            return;-->
+<!--        }-->
+
+<!--        const clone = table.cloneNode(true);-->
+<!--        clone.querySelectorAll('td:last-child').forEach(cell => {-->
+<!--            cell.innerHTML = '';-->
+<!--        });-->
+<!--        clone.querySelectorAll('th:last-child').forEach(cell => {-->
+<!--            cell.innerHTML = '';-->
+<!--        });-->
+
+<!--        let html = `-->
+<!--            <html xmlns:o="urn:schemas-microsoft-com:office:office"-->
+<!--                  xmlns:w="urn:schemas-microsoft-com:office:word"-->
+<!--                  xmlns="http://www.w3.org/TR/REC-html40">-->
+<!--                <head>-->
+<!--                    <meta charset="UTF-8">-->
+<!--                    <title>${filename}</title>-->
+<!--                    &lt;!&ndash;[if gte mso 9]>-->
+<!--                    <xml>-->
+<!--                        <w:WordDocument>-->
+<!--                            <w:View>Print</w:View>-->
+<!--                            <w:Zoom>100</w:Zoom>-->
+<!--                        </w:WordDocument>-->
+<!--                    </xml>-->
+<!--                    <![endif]&ndash;&gt;-->
+<!--                    <style>-->
+<!--                        body { font-family: 'Cairo', Arial, sans-serif; direction: rtl; padding: 30px; }-->
+<!--                        h2 { text-align: center; color: #2c3e50; font-size: 24px; margin-bottom: 5px; }-->
+<!--                        .sub-title { text-align: center; color: #7f8c8d; font-size: 14px; margin-bottom: 20px; }-->
+<!--                        table { border-collapse: collapse; width: 100%; margin-top: 15px; }-->
+<!--                        th, td { border: 1px solid #bdc3c7; padding: 8px 10px; text-align: right; }-->
+<!--                        th { background: #34495e; color: white; font-weight: bold; }-->
+<!--                        tr:nth-child(even) { background: #ecf0f1; }-->
+<!--                        .footer { text-align: center; color: #95a5a6; font-size: 10px; margin-top: 25px; }-->
+<!--                    </style>-->
+<!--                </head>-->
+<!--                <body>-->
+<!--                    <h2>${filename}</h2>-->
+<!--                    <div class="sub-title">${companyName || companyCode}</div>-->
+<!--                    <p style="text-align:center;color:#95a5a6;font-size:12px;">تاريخ التصدير: ${new Date().toLocaleDateString('ar-EG')}</p>-->
+<!--                    ${clone.outerHTML}-->
+<!--                    <div class="footer">تم التصدير من نظام فواتير المحاسبي - م. اصيل فتاحي</div>-->
+<!--                </body>-->
+<!--            </html>-->
+<!--        `;-->
+
+<!--        const blob = new Blob([html], { type: 'application/msword' });-->
+<!--        const url = URL.createObjectURL(blob);-->
+<!--        const a = document.createElement('a');-->
+<!--        a.href = url;-->
+<!--        a.download = `${filename}_${companyCode}_${new Date().toISOString().split('T')[0]}.doc`;-->
+<!--        document.body.appendChild(a);-->
+<!--        a.click();-->
+<!--        document.body.removeChild(a);-->
+<!--        URL.revokeObjectURL(url);-->
+
+<!--        showToast(`✅ تم تصدير ${filename} إلى Word`, 'success');-->
+<!--    }-->
+
+<!--    // ============================================================-->
+<!--    // 8. جلب وعرض الأصناف-->
+<!--    // ============================================================-->
+<!--    async function loadItems() {-->
+<!--        try {-->
+<!--            const response = await fetch(`${API_BASE}/items/company/${companyCode}`, {-->
+<!--                headers: getHeaders()-->
+<!--            });-->
+<!--            if (!response.ok) throw new Error('فشل جلب الأصناف');-->
+<!--            const items = await response.json();-->
+<!--            renderItemsTable(items);-->
+<!--            updateStats(items);-->
+<!--            document.getElementById('sideItemCount').innerText = items.length || 0;-->
+<!--        } catch (error) {-->
+<!--            document.getElementById('itemsTableBody').innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding: 20px;"><i class="fas fa-exclamation-triangle"></i> ${error.message}</td></tr>`;-->
+<!--            showToast('❌ ' + error.message, 'error');-->
+<!--        }-->
+<!--    }-->
+
+<!--    function renderItemsTable(items) {-->
+<!--        const tbody = document.getElementById('itemsTableBody');-->
+<!--        tbody.innerHTML = '';-->
+<!--        if (!items || items.length === 0) {-->
+<!--            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding: 20px;"><i class="fas fa-inbox"></i> لا توجد أصناف</td></tr>`;-->
+<!--            return;-->
+<!--        }-->
+<!--        items.forEach(item => {-->
+<!--            let stockClass = 'stock-high';-->
+<!--            let stockLabel = '🟢 متوفر';-->
+<!--            if (item.currentStock <= 5) {-->
+<!--                stockClass = 'stock-low';-->
+<!--                stockLabel = '🔴 منخفض';-->
+<!--            } else if (item.currentStock <= 20) {-->
+<!--                stockClass = 'stock-medium';-->
+<!--                stockLabel = '🟡 متوسط';-->
+<!--            }-->
+
+<!--            tbody.innerHTML += `-->
+<!--                <tr>-->
+<!--                    <td><span class="code-highlight">${item.itemCode}</span></td>-->
+<!--                    <td><b>${item.nameAr}</b></td>-->
+<!--                    <td>${item.unit}</td>-->
+<!--                    <td style="font-family:monospace;">${Number(item.purchasePrice).toFixed(2)}</td>-->
+<!--                    <td style="font-family:monospace;">${Number(item.salePrice).toFixed(2)}</td>-->
+<!--                    <td style="font-family:monospace;font-weight:700;">${Number(item.currentStock).toFixed(2)}</td>-->
+<!--                    <td><span class="type-badge ${stockClass}">${stockLabel}</span></td>-->
+<!--                </tr>-->
+<!--            `;-->
+<!--        });-->
+<!--    }-->
+
+<!--    function updateStats(items) {-->
+<!--        let totalItems = items.length;-->
+<!--        let totalStock = 0;-->
+<!--        let totalValue = 0;-->
+<!--        let totalSalesValue = 0;-->
+
+<!--        items.forEach(item => {-->
+<!--            totalStock += Number(item.currentStock);-->
+<!--            totalValue += Number(item.currentStock) * Number(item.purchasePrice);-->
+<!--            totalSalesValue += Number(item.currentStock) * Number(item.salePrice);-->
+<!--        });-->
+
+<!--        document.getElementById('lblTotalItems').innerText = totalItems;-->
+<!--        document.getElementById('lblTotalStock').innerText = totalStock.toFixed(2);-->
+<!--        document.getElementById('lblTotalValue').innerText = totalValue.toFixed(2);-->
+<!--        document.getElementById('lblTotalSalesValue').innerText = totalSalesValue.toFixed(2);-->
+<!--    }-->
+
+<!--    // ============================================================-->
+<!--    // 9. جلب وعرض الموردين-->
+<!--    // ============================================================-->
+<!--    async function loadSuppliers() {-->
+<!--        try {-->
+<!--            const response = await fetch(`${API_BASE}/suppliers/company/${companyCode}`, {-->
+<!--                headers: getHeaders()-->
+<!--            });-->
+<!--            if (!response.ok) throw new Error('فشل جلب الموردين');-->
+<!--            const suppliers = await response.json();-->
+<!--            renderSuppliersTable(suppliers);-->
+<!--            document.getElementById('sideSupplierCount').innerText = suppliers.length || 0;-->
+<!--        } catch (error) {-->
+<!--            document.getElementById('suppliersTableBody').innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding: 20px;"><i class="fas fa-exclamation-triangle"></i> ${error.message}</td></tr>`;-->
+<!--            showToast('❌ ' + error.message, 'error');-->
+<!--        }-->
+<!--    }-->
+
+<!--    function renderSuppliersTable(suppliers) {-->
+<!--        const tbody = document.getElementById('suppliersTableBody');-->
+<!--        tbody.innerHTML = '';-->
+<!--        if (!suppliers || suppliers.length === 0) {-->
+<!--            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding: 20px;"><i class="fas fa-inbox"></i> لا يوجد موردين</td></tr>`;-->
+<!--            return;-->
+<!--        }-->
+<!--        suppliers.forEach((s, index) => {-->
+<!--            tbody.innerHTML += `-->
+<!--                <tr>-->
+<!--                    <td>${index + 1}</td>-->
+<!--                    <td><span class="code-highlight">${s.supplierCode}</span></td>-->
+<!--                    <td><b>${s.name}</b></td>-->
+<!--                    <td>${s.phone || '-&#45;&#45;'}</td>-->
+<!--                    <td>${s.address || '-&#45;&#45;'}</td>-->
+<!--                    <td>-->
+<!--                        <button class="btn-sm btn-danger-sm" onclick="deleteSupplier(${s.id}, '${s.supplierCode}')">-->
+<!--                            <i class="fas fa-trash"></i>-->
+<!--                        </button>-->
+<!--                    </td>-->
+<!--                </tr>-->
+<!--            `;-->
+<!--        });-->
+<!--    }-->
+
+<!--    // ============================================================-->
+<!--    // 10. جلب وعرض العملاء-->
+<!--    // ============================================================-->
+<!--    async function loadCustomers() {-->
+<!--        try {-->
+<!--            const response = await fetch(`${API_BASE}/customers/company/${companyCode}`, {-->
+<!--                headers: getHeaders()-->
+<!--            });-->
+<!--            if (!response.ok) throw new Error('فشل جلب العملاء');-->
+<!--            const customers = await response.json();-->
+<!--            renderCustomersTable(customers);-->
+<!--            document.getElementById('sideCustomerCount').innerText = customers.length || 0;-->
+<!--        } catch (error) {-->
+<!--            document.getElementById('customersTableBody').innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding: 20px;"><i class="fas fa-exclamation-triangle"></i> ${error.message}</td></tr>`;-->
+<!--            showToast('❌ ' + error.message, 'error');-->
+<!--        }-->
+<!--    }-->
+
+<!--    function renderCustomersTable(customers) {-->
+<!--        const tbody = document.getElementById('customersTableBody');-->
+<!--        tbody.innerHTML = '';-->
+<!--        if (!customers || customers.length === 0) {-->
+<!--            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding: 20px;"><i class="fas fa-inbox"></i> لا يوجد عملاء</td></tr>`;-->
+<!--            return;-->
+<!--        }-->
+<!--        customers.forEach((c, index) => {-->
+<!--            tbody.innerHTML += `-->
+<!--                <tr>-->
+<!--                    <td>${index + 1}</td>-->
+<!--                    <td><span class="code-highlight">${c.customerCode}</span></td>-->
+<!--                    <td><b>${c.name}</b></td>-->
+<!--                    <td>${c.phone || '-&#45;&#45;'}</td>-->
+<!--                    <td>${c.address || '-&#45;&#45;'}</td>-->
+<!--                    <td>-->
+<!--                        <button class="btn-sm btn-danger-sm" onclick="deleteCustomer(${c.id}, '${c.customerCode}')">-->
+<!--                            <i class="fas fa-trash"></i>-->
+<!--                        </button>-->
+<!--                    </td>-->
+<!--                </tr>-->
+<!--            `;-->
+<!--        });-->
+<!--    }-->
+
+<!--    // ============================================================-->
+<!--    // 11. حذف مورد-->
+<!--    // ============================================================-->
+<!--    async function deleteSupplier(id, code) {-->
+<!--        if (!confirm(`⚠️ هل أنت متأكد من حذف المورد "${code}"؟`)) return;-->
+
+<!--        try {-->
+<!--            const response = await fetch(`${API_BASE}/suppliers/${id}`, {-->
+<!--                method: 'DELETE',-->
+<!--                headers: getHeaders()-->
+<!--            });-->
+<!--            if (response.ok) {-->
+<!--                showToast(`✅ تم حذف المورد ${code} بنجاح`, 'success');-->
+<!--                await Promise.all([loadSuppliers(), loadItems()]);-->
+<!--            } else {-->
+<!--                const err = await response.json();-->
+<!--                showToast(`❌ ${err.message || 'فشل حذف المورد'}`, 'error');-->
+<!--            }-->
+<!--        } catch (error) {-->
+<!--            showToast('❌ خطأ في الاتصال', 'error');-->
+<!--        }-->
+<!--    }-->
+
+<!--    // ============================================================-->
+<!--    // 12. حذف عميل-->
+<!--    // ============================================================-->
+<!--    async function deleteCustomer(id, code) {-->
+<!--        if (!confirm(`⚠️ هل أنت متأكد من حذف العميل "${code}"؟`)) return;-->
+
+<!--        try {-->
+<!--            const response = await fetch(`${API_BASE}/customers/${id}`, {-->
+<!--                method: 'DELETE',-->
+<!--                headers: getHeaders()-->
+<!--            });-->
+<!--            if (response.ok) {-->
+<!--                showToast(`✅ تم حذف العميل ${code} بنجاح`, 'success');-->
+<!--                await Promise.all([loadCustomers(), loadItems()]);-->
+<!--            } else {-->
+<!--                const err = await response.json();-->
+<!--                showToast(`❌ ${err.message || 'فشل حذف العميل'}`, 'error');-->
+<!--            }-->
+<!--        } catch (error) {-->
+<!--            showToast('❌ خطأ في الاتصال', 'error');-->
+<!--        }-->
+<!--    }-->
+
+<!--    // ============================================================-->
+<!--    // 13. إضافة صنف جديد-->
+<!--    // ============================================================-->
+<!--    async function submitNewItem(event) {-->
+<!--        event.preventDefault();-->
+<!--        const data = {-->
+<!--            companyBusinessCode: companyCode,-->
+<!--            itemCode: document.getElementById('newItemCode').value,-->
+<!--            nameAr: document.getElementById('newItemNameAr').value,-->
+<!--            nameEn: document.getElementById('newItemNameEn').value || '',-->
+<!--            unit: document.getElementById('newItemUnit').value,-->
+<!--            purchasePrice: parseFloat(document.getElementById('newItemPurchasePrice').value) || 0,-->
+<!--            salePrice: parseFloat(document.getElementById('newItemSalePrice').value) || 0,-->
+<!--            currentStock: parseFloat(document.getElementById('newItemCurrentStock').value) || 0-->
+<!--        };-->
+
+<!--        try {-->
+<!--            const response = await fetch(`${API_BASE}/items`, {-->
+<!--                method: 'POST',-->
+<!--                headers: getHeaders(),-->
+<!--                body: JSON.stringify(data)-->
+<!--            });-->
+<!--            if (response.ok) {-->
+<!--                document.getElementById('addItemResult').innerHTML = `<div class="alert-success" style="padding:10px;border-radius:8px;text-align:center;">✅ تم إضافة الصنف بنجاح!</div>`;-->
+<!--                document.getElementById('addItemForm').reset();-->
+<!--                document.getElementById('newItemPurchasePrice').value = 0;-->
+<!--                document.getElementById('newItemSalePrice').value = 0;-->
+<!--                document.getElementById('newItemCurrentStock').value = 0;-->
+<!--                await Promise.all([loadItems(), loadSuppliers(), loadCustomers()]);-->
+<!--                showToast('✅ تم إضافة الصنف بنجاح', 'success');-->
+<!--            } else {-->
+<!--                const err = await response.json();-->
+<!--                document.getElementById('addItemResult').innerHTML = `<div class="alert-error" style="padding:10px;border-radius:8px;text-align:center;">❌ خطأ: ${err.message || 'فشل إضافة الصنف'}</div>`;-->
+<!--                showToast('❌ فشل إضافة الصنف', 'error');-->
+<!--            }-->
+<!--        } catch (error) {-->
+<!--            document.getElementById('addItemResult').innerHTML = `<div class="alert-error" style="padding:10px;border-radius:8px;text-align:center;">❌ خطأ في الاتصال</div>`;-->
+<!--            showToast('❌ خطأ في الاتصال', 'error');-->
+<!--        }-->
+<!--    }-->
+
+<!--    // ============================================================-->
+<!--    // 14. إضافة مورد جديد (مع توليد الكود تلقائياً)-->
+<!--    // ============================================================-->
+<!--    async function submitNewSupplier(event) {-->
+<!--        event.preventDefault();-->
+<!--        const data = {-->
+<!--            companyBusinessCode: companyCode,-->
+<!--            supplierCode: '',-->
+<!--            name: document.getElementById('newSupplierName').value,-->
+<!--            phone: document.getElementById('newSupplierPhone').value || '',-->
+<!--            address: document.getElementById('newSupplierAddress').value || '',-->
+<!--            notes: document.getElementById('newSupplierNotes').value || ''-->
+<!--        };-->
+
+<!--        try {-->
+<!--            const response = await fetch(`${API_BASE}/suppliers`, {-->
+<!--                method: 'POST',-->
+<!--                headers: getHeaders(),-->
+<!--                body: JSON.stringify(data)-->
+<!--            });-->
+<!--            if (response.ok) {-->
+<!--                const result = await response.json();-->
+<!--                document.getElementById('addSupplierResult').innerHTML = `-->
+<!--                    <div class="alert-success" style="padding:10px;border-radius:8px;text-align:center;">-->
+<!--                        ✅ تم حفظ المورد <b>${result.name}</b> برقم: <span class="code-highlight">${result.supplierCode}</span>-->
+<!--                    </div>-->
+<!--                `;-->
+<!--                document.getElementById('addSupplierForm').reset();-->
+<!--                await Promise.all([loadSuppliers(), loadItems()]);-->
+<!--                showToast(`✅ تم حفظ المورد ${result.supplierCode}`, 'success');-->
+<!--                document.getElementById('newSupplierCode').placeholder = 'سيتم توليده تلقائياً';-->
+<!--            } else {-->
+<!--                const err = await response.json();-->
+<!--                document.getElementById('addSupplierResult').innerHTML = `<div class="alert-error" style="padding:10px;border-radius:8px;text-align:center;">❌ خطأ: ${err.message || 'فشل حفظ المورد'}</div>`;-->
+<!--                showToast('❌ فشل حفظ المورد', 'error');-->
+<!--            }-->
+<!--        } catch (error) {-->
+<!--            document.getElementById('addSupplierResult').innerHTML = `<div class="alert-error" style="padding:10px;border-radius:8px;text-align:center;">❌ خطأ في الاتصال</div>`;-->
+<!--            showToast('❌ خطأ في الاتصال', 'error');-->
+<!--        }-->
+<!--    }-->
+
+<!--    // ============================================================-->
+<!--    // 15. إضافة عميل جديد (مع توليد الكود تلقائياً)-->
+<!--    // ============================================================-->
+<!--    async function submitNewCustomer(event) {-->
+<!--        event.preventDefault();-->
+<!--        const data = {-->
+<!--            companyBusinessCode: companyCode,-->
+<!--            customerCode: '',-->
+<!--            name: document.getElementById('newCustomerName').value,-->
+<!--            phone: document.getElementById('newCustomerPhone').value || '',-->
+<!--            address: document.getElementById('newCustomerAddress').value || '',-->
+<!--            notes: document.getElementById('newCustomerNotes').value || ''-->
+<!--        };-->
+
+<!--        try {-->
+<!--            const response = await fetch(`${API_BASE}/customers`, {-->
+<!--                method: 'POST',-->
+<!--                headers: getHeaders(),-->
+<!--                body: JSON.stringify(data)-->
+<!--            });-->
+<!--            if (response.ok) {-->
+<!--                const result = await response.json();-->
+<!--                document.getElementById('addCustomerResult').innerHTML = `-->
+<!--                    <div class="alert-success" style="padding:10px;border-radius:8px;text-align:center;">-->
+<!--                        ✅ تم حفظ العميل <b>${result.name}</b> برقم: <span class="code-highlight">${result.customerCode}</span>-->
+<!--                    </div>-->
+<!--                `;-->
+<!--                document.getElementById('addCustomerForm').reset();-->
+<!--                await Promise.all([loadCustomers(), loadItems()]);-->
+<!--                showToast(`✅ تم حفظ العميل ${result.customerCode}`, 'success');-->
+<!--                document.getElementById('newCustomerCode').placeholder = 'سيتم توليده تلقائياً';-->
+<!--            } else {-->
+<!--                const err = await response.json();-->
+<!--                document.getElementById('addCustomerResult').innerHTML = `<div class="alert-error" style="padding:10px;border-radius:8px;text-align:center;">❌ خطأ: ${err.message || 'فشل حفظ العميل'}</div>`;-->
+<!--                showToast('❌ فشل حفظ العميل', 'error');-->
+<!--            }-->
+<!--        } catch (error) {-->
+<!--            document.getElementById('addCustomerResult').innerHTML = `<div class="alert-error" style="padding:10px;border-radius:8px;text-align:center;">❌ خطأ في الاتصال</div>`;-->
+<!--            showToast('❌ خطأ في الاتصال', 'error');-->
+<!--        }-->
+<!--    }-->
+
+<!--    // ============================================================-->
+<!--    // 16. تحديث جميع البيانات-->
+<!--    // ============================================================-->
+<!--    async function refreshAllData() {-->
+<!--        showToast('🔄 جاري تحديث البيانات...', 'info');-->
+<!--        await Promise.all([loadItems(), loadSuppliers(), loadCustomers()]);-->
+<!--        showToast('✅ تم تحديث جميع البيانات', 'success');-->
+<!--    }-->
+
+<!--    // ============================================================-->
+<!--    // 17. التهيئة-->
+<!--    // ============================================================-->
+<!--    document.addEventListener('DOMContentLoaded', async function() {-->
+<!--        getCompanyFromURL();-->
+<!--        initTheme();-->
+
+<!--        await Promise.all([-->
+<!--            loadItems(),-->
+<!--            loadSuppliers(),-->
+<!--            loadCustomers()-->
+<!--        ]);-->
+
+<!--        const today = new Date().toISOString().split('T')[0];-->
+<!--    });-->
+<!--</script>-->
+
+<!--</body>-->
+<!--</html>-->
+
+
+
+
+
